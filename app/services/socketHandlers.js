@@ -1,5 +1,3 @@
-const { getProductPrices } = require('../controllers/product');
-const { getBoxPrices } = require('../controllers/apibox');
 const { getUserFromToken } = require('../utils/user');
 const { verifyToken } = require('../utils/token');
 const User = require('../database/models/User');
@@ -22,7 +20,6 @@ exports.initSocketService = (socketIo) => {
                 }
             }
 
-            globalEmiters(socket.id);
 
             socket.on('disconnect', async () => {
                 await User.updateOne({ _id: user._id }, { $unset: { socket_id: "" } });
@@ -34,12 +31,4 @@ exports.initSocketService = (socketIo) => {
             socket.disconnect();
         }
     });
-};
-
-const globalEmiters = async (socket_id) => {
-    const productPrices = await getProductPrices();
-    const boxPrices = await getBoxPrices();
-    io.to(socket_id).emit("apiData", global.apiData);
-    io.to(socket_id).emit("productPrices", productPrices);
-    io.to(socket_id).emit("boxPrices", boxPrices);
 };

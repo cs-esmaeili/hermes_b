@@ -12,14 +12,10 @@ const user = require("./app/routes/user");
 const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
 const product = require("./app/routes/product");
-const factor = require("./app/routes/factor");
-const apibox = require("./app/routes/apibox");
 const { logInStepOne, logInStepTwo } = require("./app/controllers/user");
-const coWorker = require("./app/routes/coWorker");
 const permission = require("./app/routes/permission");
 const { config } = require("./app/utils/sms");
 const { getMainPartOfUrl } = require("./app/utils/general");
-const { goldPriceService } = require('./app/services/goldPrice');
 const { backUpService } = require('./app/services/backUp');
 const { initSocketService } = require('./app/services/socketHandlers');
 const { LogService } = require('./app/services/logger');
@@ -88,9 +84,6 @@ const { checkRoutePermission } = require("./app/middlewares/checkAuth");
   app.use("/post", post);
   app.use("/file", file);
   app.use("/product", product);
-  app.use("/factor", factor);
-  app.use("/apibox", apibox);
-  app.use("/coWorker", coWorker);
   app.use("/smsTemplate", smsTemplate);
   app.use("/smsHistory", smsHistory);
 
@@ -105,7 +98,6 @@ const { checkRoutePermission } = require("./app/middlewares/checkAuth");
   server.listen(PORT, () => {
     console.log(`Server running on port : ${PORT}`);
 
-    goldPriceService();
     backUpService();
     LogService();
     reloadJobs();

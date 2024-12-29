@@ -4,41 +4,71 @@ const Role = require("./Role");
 const mongoose = require("mongoose");
 
 
-const schema = buildSchema(
-    {
-        token_id: {
-            type: mongoose.ObjectId,
-            ref: 'Token',
-        },
-        role_id: {
-            type: mongoose.ObjectId,
-            required: true,
-            ref: 'Role',
-        },
-        socket_id: {
-            type: String,
-            unique: true,
-            sparse: true
-        },
-        userName: {
-            type: String,
-            required: true,
-            unique: true,
-            max: 11,
-            min: 11,
-        },
-        data: {
-            image: {
-                url: String,
-                blurHash: String
+const schema = buildSchema({
+    token_id: {
+        type: mongoose.ObjectId,
+        ref: 'Token',
+    },
+    role_id: {
+        type: mongoose.ObjectId,
+        required: true,
+        ref: 'Role',
+    },
+    socket_id: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+    userName: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: function (value) {
+                // Validate if the userName is either an email or a phone number
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const phoneRegex = /^[0-9]{11}$/; // Example for 11-digit phone numbers
+                return emailRegex.test(value) || phoneRegex.test(value);
             },
-            fullName: String,
-            nationalCode: String,
-            birthday: mongoose.Schema.Types.Mixed,
-            shebaNumber: String,
-        }
-    }
-);
+            message: (props) =>
+                `${props.value} is not a valid email or phone number!`,
+        },
+    },
+    email: {
+        type: String,
+        validate: {
+            validator: function (value) {
+                // Optional validation for email if provided
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return !value || emailRegex.test(value);
+            },
+            message: (props) => `${props.value} is not a valid email!`,
+        },
+    },
+    phoneNumber: {
+        type: String,
+        validate: {
+            validator: function (value) {
+                // Optional validation for phone number if provided
+                const phoneRegex = /^[0-9]{11}$/;
+                return !value || phoneRegex.test(value);
+            },
+            message: (props) =>
+                `${props.value} is not a valid 11-digit phone number!`,
+        },
+    },
+    data: {
+        image: {
+            url: String,
+            blurHash: String,
+        },
+        fullName: String,
+        nationalCode: String,
+        birthday: mongoose.Schema.Types.Mixed,
+        shebaNumber: String,
+    },
+});
+
 
 schema.statics.createNormalUser = async function (userName) {
     const role = await Role.findOne({ name: "user" });
