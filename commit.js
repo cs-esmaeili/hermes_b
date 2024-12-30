@@ -43,7 +43,7 @@ const questions = [
 
 // Function to generate commit message
 const generateCommitMessage = (answers) => {
-  let message = `${answers.type}${answers.scope ? `(${answers.scope})` : ''}: ${answers.subject}`;
+  let message = `${answers.type}${answers.scope ? `(${ answers.scope })` : ''}: ${answers.subject}`;
   
   // Process body input, each line starting with `-`
   if (answers.body) {

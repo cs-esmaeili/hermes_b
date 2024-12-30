@@ -3,7 +3,6 @@ const { createToken } = require("../../utils/token");
 const Role = require("./Role");
 const mongoose = require("mongoose");
 
-
 const schema = buildSchema({
     token_id: {
         type: mongoose.ObjectId,
@@ -49,7 +48,6 @@ const schema = buildSchema({
         type: String,
         validate: {
             validator: function (value) {
-                // Optional validation for phone number if provided
                 const phoneRegex = /^[0-9]{11}$/;
                 return !value || phoneRegex.test(value);
             },
@@ -66,6 +64,12 @@ const schema = buildSchema({
         nationalCode: String,
         birthday: mongoose.Schema.Types.Mixed,
         shebaNumber: String,
+        fatherName: String, 
+        cardNumber: String,
+        companyName: String, 
+        economicCode: Number,
+        registrationNumber: Number, 
+        postalCode: Number, 
     },
 });
 

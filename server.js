@@ -56,7 +56,7 @@ const { checkRoutePermission } = require("./app/middlewares/checkAuth");
 
 
   //SMS config
-  config();
+  // config();
 
   //* BodyPaser
   app.use(express.urlencoded({ extended: false }));
