@@ -9,13 +9,11 @@ const file = require("./app/routes/file");
 const post = require("./app/routes/post");
 const role = require("./app/routes/role");
 const user = require("./app/routes/user");
+const auth = require("./app/routes/auth");
 const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
 const product = require("./app/routes/product");
-const { logInStepOne, logInStepTwo } = require("./app/controllers/user");
 const permission = require("./app/routes/permission");
-const { config } = require("./app/utils/sms");
-const { isEmailOrPhone } = require("./app/utils/user");
 const { getMainPartOfUrl } = require("./app/utils/general");
 const { backUpService } = require('./app/services/backUp');
 const { initSocketService } = require('./app/services/socketHandlers');
@@ -74,10 +72,8 @@ const { checkRoutePermission } = require("./app/middlewares/checkAuth");
 
 
   //* Routes
+  app.use("/auth", auth);
   app.use(checkRoutePermission);
-  app.use("/logInStepOne", logInStepOne);
-  app.use("/logInStepTwo", logInStepTwo);
-
   app.use("/user", user);
   app.use("/role", role);
   app.use("/permission", permission);

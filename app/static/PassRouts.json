@@ -1,5 +1,6 @@
 [
-    "/logInStepOne",
-    "/logInStepTwo",
-    "/product/productList"
+    "/auth/createUserWithPassword",
+    "/auth/logInWithPassword",
+    "/auth/logInPhoneStepOne",
+    "/auth/logInPhoneStepTwo"
 ]
