@@ -1,6 +1,5 @@
 [
-    "/auth/createUserWithPassword",
-    "/auth/logInWithPassword",
+    "/auth/createOrLoginWithPassword",
     "/auth/logInPhoneStepOne",
     "/auth/logInPhoneStepTwo"
 ]

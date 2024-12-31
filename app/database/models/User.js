@@ -1,6 +1,7 @@
 const { buildSchema } = require("./builder");
 const { createToken } = require("../../utils/token");
 const { isEmailOrPhone } = require("../../utils/user");
+const bcrypt = require('bcryptjs');
 const Role = require("./Role");
 const mongoose = require("mongoose");
 
@@ -80,7 +81,7 @@ const schema = buildSchema({
 
 schema.statics.createNormalUser = async function (userName, password = null) {
     try {
-        const role = await Role.findOne({ name: "user" });
+        const role = await Role.findOne({ name: "User" });
         const tokenObject = await createToken(userName);
         const userNameType = await isEmailOrPhone(userName);
         const userData = {
@@ -100,7 +101,7 @@ schema.statics.createNormalUser = async function (userName, password = null) {
             userData.password = hashedPassword;
         }
         const user = await this.create(userData);
-        return { newUser, newToken: tokenObject };
+        return { newUser: user, newToken: tokenObject };
     } catch (err) {
         console.error(err);
         throw { message: err.message || "Error creating user", statusCode: 500 };

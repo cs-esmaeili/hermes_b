@@ -8,55 +8,40 @@ const bcrypt = require('bcryptjs');
 const { mlogInStepOne, mlogInStepTwo } = require('../static/response.json');
 
 
-exports.createUserWithPassword = async (req, res, next) => {
+exports.createOrLoginWithPassword = async (req, res, next) => {
     try {
         const { userName, password } = req.body;
 
         let user = await User.findOne({ userName });
+
         if (user) {
-            throw { message: 'User already exists', statusCode: 400 };
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                throw { message: 'Invalid password', statusCode: 404 };
+            }
+
+            const { _id, token } = await createToken(userName, user.token_id);
+            return res.json({
+                message: 'Login successful',
+                token,
+                sessionTime: process.env.USERS_SESSIONS_TIME,
+            });
+        } else {
+            let { newUser, newToken } = await User.createNormalUser(userName, password);
+
+            return res.json({
+                message: 'User created successfully',
+                user: newUser,
+                token: newToken.token,
+                sessionTime: process.env.USERS_SESSIONS_TIME,
+            });
         }
-
-        let { newUser, newToken } = await User.createNormalUser(userName, password);
-
-        res.json({
-            message: 'User created successfully',
-            user: newUser,
-            token: newToken.token,
-            sessionTime: process.env.USERS_SESSIONS_TIME,
-        });
     } catch (err) {
         console.log(err);
         res.status(err.statusCode || 500).json({ message: err.message || 'Internal server error' });
     }
 };
 
-
-exports.logInWithPassword = async (req, res, next) => {
-    try {
-        const { userName, password } = req.body;
-        let user = await User.findOne({ userName });
-        if (!user) {
-            throw { message: 'User not found or Invalid password', statusCode: 404 };
-        }
-
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-
-        if (!isPasswordValid) {
-            throw { message: 'User not found or Invalid password', statusCode: 404 };
-        }
-        const { _id, token } = await createToken(userName, user.token_id);
-
-        res.json({
-            message: mlogInStepTwo.ok,
-            token,
-            sessionTime: process.env.USERS_SESSIONS_TIME,
-        });
-    } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 500).json({ message: err.message || 'Internal server error' });
-    }
-};
 
 exports.logInPhoneStepOne = async (req, res, next) => {
     try {
