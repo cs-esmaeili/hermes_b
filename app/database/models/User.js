@@ -56,6 +56,9 @@ const schema = buildSchema({
                 `${props.value} is not a valid 11-digit phone number!`,
         },
     },
+    password: {
+        type: String,
+    },
     data: {
         image: {
             url: String,
@@ -75,13 +78,13 @@ const schema = buildSchema({
 });
 
 
-schema.statics.createNormalUser = async function (userName) {
+schema.statics.createNormalUser = async function (userName, password = null) {
     try {
         const role = await Role.findOne({ name: "user" });
-        const { _id, token } = await createToken(userName);
+        const tokenObject = await createToken(userName);
         const userNameType = await isEmailOrPhone(userName);
         const userData = {
-            token_id: _id,
+            token_id: tokenObject._id,
             role_id: role._id,
             userName,
         };
@@ -92,8 +95,12 @@ schema.statics.createNormalUser = async function (userName) {
         } else {
             throw { message: "Invalid username type", statusCode: 400 };
         }
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            userData.password = hashedPassword;
+        }
         const user = await this.create(userData);
-        return user;
+        return { newUser, newToken: tokenObject };
     } catch (err) {
         console.error(err);
         throw { message: err.message || "Error creating user", statusCode: 500 };

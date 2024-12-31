@@ -13,28 +13,49 @@ const bcrypt = require('bcryptjs');
 
 const { mlogInStepOne, mlogInStepTwo, registerPure, updateRegisterPure, mSearchUser, mBuyProducts, mSellProducts } = require('../static/response.json');
 
+exports.createUserWithPassword = async (req, res, next) => {
+    try {
+        const { userName, password } = req.body;
+
+        let user = await User.findOne({ userName });
+        if (user) {
+            throw { message: 'User already exists', statusCode: 400 };
+        }
+
+        let { newUser, newToken } = await User.createNormalUser(userName, password);
+
+        res.json({
+            message: 'User created successfully',
+            user: newUser,
+            token: newToken.token,
+            sessionTime: process.env.USERS_SESSIONS_TIME,
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 500).json({ message: err.message || 'Internal server error' });
+    }
+};
+
 
 exports.logInWithPassword = async (req, res, next) => {
     try {
-        const { userName, password } = req.body;  
+        const { userName, password } = req.body;
         let user = await User.findOne({ userName });
         if (!user) {
-            throw { message: 'User not found', statusCode: 404 };
+            throw { message: 'User not found or Invalid password', statusCode: 404 };
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
+
         if (!isPasswordValid) {
-            throw { message: 'Invalid password', statusCode: 401 };
+            throw { message: 'User not found or Invalid password', statusCode: 404 };
         }
+        const { _id, token } = await createToken(userName, user.token_id);
 
-        // Create a JWT token for the user (if password is valid)
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        // Send the response with the token
         res.json({
-            message: 'Login successful',
-            token: token,  // Include token in response
-            expireTime: '1h'  // Expiration time of the token
+            message: mlogInStepTwo.ok,
+            token,
+            sessionTime: process.env.USERS_SESSIONS_TIME,
         });
     } catch (err) {
         console.log(err);
@@ -50,7 +71,7 @@ exports.logInPhoneStepOne = async (req, res, next) => {
         if (!user) {
             user = await User.createNormalUser(userName);
         }
-        const result = await createVerifyCode(user._id);
+        const result = await createVerifyCode(user.newUser._id);
 
         if (process.env.ONLOCAL === 'true') {
             console.log(result.code);
