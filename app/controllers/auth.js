@@ -12,7 +12,7 @@ exports.createOrLoginWithPassword = async (req, res, next) => {
     try {
         const { userName, password } = req.body;
 
-        let user = await User.findOne({ userName });
+        let user = await User.findOne({ $or: [{ userName: userName }, { email: userName }, { phoneNumber: userName }] });
 
         if (user) {
             const isPasswordValid = await bcrypt.compare(password, user.password);
