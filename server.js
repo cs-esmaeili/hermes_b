@@ -15,6 +15,7 @@ const product = require("./app/routes/product");
 const { logInStepOne, logInStepTwo } = require("./app/controllers/user");
 const permission = require("./app/routes/permission");
 const { config } = require("./app/utils/sms");
+const { isEmailOrPhone } = require("./app/utils/user");
 const { getMainPartOfUrl } = require("./app/utils/general");
 const { backUpService } = require('./app/services/backUp');
 const { initSocketService } = require('./app/services/socketHandlers');
@@ -95,15 +96,14 @@ const { checkRoutePermission } = require("./app/middlewares/checkAuth");
 
   const PORT = process.env.PORT || 3000;
 
+
   server.listen(PORT, () => {
     console.log(`Server running on port : ${PORT}`);
-
     backUpService();
     LogService();
     reloadJobs();
     global.io = io;
     initSocketService();
-
   });
 })();
 

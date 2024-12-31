@@ -1,5 +1,6 @@
 const { buildSchema } = require("./builder");
 const { createToken } = require("../../utils/token");
+const { isEmailOrPhone } = require("../../utils/user");
 const Role = require("./Role");
 const mongoose = require("mongoose");
 
@@ -64,21 +65,39 @@ const schema = buildSchema({
         nationalCode: String,
         birthday: mongoose.Schema.Types.Mixed,
         shebaNumber: String,
-        fatherName: String, 
+        fatherName: String,
         cardNumber: String,
-        companyName: String, 
+        companyName: String,
         economicCode: Number,
-        registrationNumber: Number, 
-        postalCode: Number, 
+        registrationNumber: Number,
+        postalCode: Number,
     },
 });
 
 
 schema.statics.createNormalUser = async function (userName) {
-    const role = await Role.findOne({ name: "user" });
-    const { _id, token } = await createToken(userName);
-    const user = await this.create({ token_id: _id, role_id: role._id, userName });
-    return user;
+    try {
+        const role = await Role.findOne({ name: "user" });
+        const { _id, token } = await createToken(userName);
+        const userNameType = await isEmailOrPhone(userName);
+        const userData = {
+            token_id: _id,
+            role_id: role._id,
+            userName,
+        };
+        if (userNameType === "phone") {
+            userData.phoneNumber = userName;
+        } else if (userNameType === "email") {
+            userData.email = userName;
+        } else {
+            throw { message: "Invalid username type", statusCode: 400 };
+        }
+        const user = await this.create(userData);
+        return user;
+    } catch (err) {
+        console.error(err);
+        throw { message: err.message || "Error creating user", statusCode: 500 };
+    }
 };
 
 schema.statics.userPermissions = async function (user_id) {

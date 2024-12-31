@@ -13,7 +13,36 @@ const bcrypt = require('bcryptjs');
 
 const { mlogInStepOne, mlogInStepTwo, registerPure, updateRegisterPure, mSearchUser, mBuyProducts, mSellProducts } = require('../static/response.json');
 
-exports.logInStepOne = async (req, res, next) => {
+
+exports.logInWithPassword = async (req, res, next) => {
+    try {
+        const { userName, password } = req.body;  
+        let user = await User.findOne({ userName });
+        if (!user) {
+            throw { message: 'User not found', statusCode: 404 };
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw { message: 'Invalid password', statusCode: 401 };
+        }
+
+        // Create a JWT token for the user (if password is valid)
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Send the response with the token
+        res.json({
+            message: 'Login successful',
+            token: token,  // Include token in response
+            expireTime: '1h'  // Expiration time of the token
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 500).json({ message: err.message || 'Internal server error' });
+    }
+};
+
+exports.logInPhoneStepOne = async (req, res, next) => {
     try {
         const { userName } = await req.body;
         let user = await User.findOne({ userName });
@@ -39,7 +68,7 @@ exports.logInStepOne = async (req, res, next) => {
     }
 }
 
-exports.logInStepTwo = async (req, res, next) => {
+exports.logInPhoneStepTwo = async (req, res, next) => {
     try {
         const { userName, code } = await req.body;
         const user = await User.findOne({ userName }).populate("role_id").lean();
