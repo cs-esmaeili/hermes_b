@@ -51,7 +51,8 @@ exports.logInPhoneStepOne = async (req, res, next) => {
         if (!user) {
             user = await User.createNormalUser(userName);
         }
-        const result = await createVerifyCode(user.newUser._id);
+
+        const result = await createVerifyCode(user?.newUser?._id ?? user?._id);
 
         if (process.env.ONLOCAL === 'true') {
             console.log(result.code);

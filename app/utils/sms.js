@@ -4,7 +4,7 @@ const { Smsir } = require('smsir-js');
 const { jalaliToMiladi } = require('../utils/TimeConverter');
 
 const smsJobs = new Map();
-let phoneLine = "30007732906702";
+let phoneLine = "30004802149461";
 const smsir = new Smsir(process.env.SMS_API_KEY, phoneLine);
 
 exports.config = async () => {
@@ -28,7 +28,7 @@ exports.sendFastSms = async (phoneNumber, template, params) => {
 
 exports.SendVerifyCodeSms = async (phoneNumber, code) => {
     try {
-        const result = await this.sendFastSms(phoneNumber, "179494",
+        const result = await this.sendFastSms(phoneNumber, "138455",
             [{
                 "name": "CODE",
                 "value": code
