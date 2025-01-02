@@ -1,6 +1,5 @@
 const { buildSchema } = require("./builder");
 const { createToken } = require("../../utils/token");
-const { isEmailOrPhone } = require("../../utils/user");
 const bcrypt = require('bcryptjs');
 const Role = require("./Role");
 const mongoose = require("mongoose");
@@ -26,9 +25,8 @@ const schema = buildSchema({
         unique: true,
         validate: {
             validator: function (value) {
-                // Validate if the userName is either an email or a phone number
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                const phoneRegex = /^[0-9]{11}$/; // Example for 11-digit phone numbers
+                const phoneRegex = /^[0-9]{11}$/;
                 return emailRegex.test(value) || phoneRegex.test(value);
             },
             message: (props) =>
@@ -39,22 +37,10 @@ const schema = buildSchema({
         type: String,
         validate: {
             validator: function (value) {
-                // Optional validation for email if provided
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return !value || emailRegex.test(value);
             },
             message: (props) => `${props.value} is not a valid email!`,
-        },
-    },
-    phoneNumber: {
-        type: String,
-        validate: {
-            validator: function (value) {
-                const phoneRegex = /^[0-9]{11}$/;
-                return !value || phoneRegex.test(value);
-            },
-            message: (props) =>
-                `${props.value} is not a valid 11-digit phone number!`,
         },
     },
     password: {
@@ -78,35 +64,42 @@ const schema = buildSchema({
     },
 });
 
-
-schema.statics.createNormalUser = async function (userName, password = null) {
+schema.statics.createNormalUser = async function (userName, email = null, password = null) {
     try {
-        const role = await Role.findOne({ name: "User" });
-        const tokenObject = await createToken(userName);
-        const userNameType = await isEmailOrPhone(userName);
+        const [role, tokenObject] = await Promise.all([
+            Role.findOne({ name: "User" }),
+            createToken(userName),
+        ]);
+
+        if (!role) {
+            throw new Error("Role not found");
+        }
+
         const userData = {
             token_id: tokenObject._id,
             role_id: role._id,
             userName,
         };
-        if (userNameType === "phone") {
-            userData.phoneNumber = userName;
-        } else if (userNameType === "email") {
-            userData.email = userName;
-        } else {
-            throw { message: "Invalid username type", statusCode: 400 };
+
+        if (email) {
+            userData.email = email; 
         }
+
         if (password) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            userData.password = hashedPassword;
+            userData.password = await bcrypt.hash(password, 10);
         }
-        const user = await this.create(userData);
-        return { newUser: user, newToken: tokenObject };
+
+        const newUser = await this.create(userData);
+        return { newUser, newToken: tokenObject };
     } catch (err) {
-        console.error(err);
-        throw { message: err.message || "Error creating user", statusCode: 500 };
+        console.error("Error creating user:", err);
+        throw {
+            message: err.message || "Error creating user",
+            statusCode: err.statusCode || 500,
+        };
     }
 };
+
 
 schema.statics.userPermissions = async function (user_id) {
     const user = await this.findOne({ _id: user_id }).populate({ path: 'role_id', populate: { path: 'permissions' } });
