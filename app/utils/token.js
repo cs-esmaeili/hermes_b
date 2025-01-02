@@ -81,7 +81,7 @@ exports.createVerifyCode = async (user_id) => {
     if (smsCode) {
         const checkTime = checkDelayTime(smsCode.updatedAt, process.env.SMS_RESEND_DELAY, false);
         if (!checkTime) {
-            throw { message: mCreateVerifyCode.fail, statusCode: 404 };
+            // throw { message: mCreateVerifyCode.fail, statusCode: 404 };
         }
         const result = await VerifyCode.updateOne({ user_id }, { code: hashRandomNumber }, { timestamps: true });
         return { result, code: randomNumber };
