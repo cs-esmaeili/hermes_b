@@ -1,15 +1,10 @@
-const { createToken, createVerifyCode } = require("../utils/token");
 const User = require("../database/models/User");
 const Role = require("../database/models/Role");
 const Box = require("../database/models/Box");
 const Factor = require("../database/models/Factor");
-const VerifyCode = require("../database/models/VerifyCode");
-const { SendVerifyCodeSms } = require("../utils/sms");
-const { checkDelayTime } = require("../utils/checkTime");
 const { convertPersianNumberToEnglish, updateProductCount } = require("../utils/general");
 const { checkUserAccess } = require("../utils/user");
 const { transaction } = require('../database');
-const bcrypt = require('bcryptjs');
 
 const { mlogInStepOne, mlogInStepTwo, registerPure, updateRegisterPure, mSearchUser, mBuyProducts, mSellProducts } = require('../static/response.json');
 
