@@ -6,7 +6,7 @@ const { convertPersianNumberToEnglish, updateProductCount } = require("../utils/
 const { checkUserAccess } = require("../utils/user");
 const { transaction } = require('../database');
 
-const { mlogInStepOne, mlogInStepTwo, registerPure, updateRegisterPure, mSearchUser, mBuyProducts, mSellProducts } = require('../static/response.json');
+const { mlogInStepOne, registerPure, updateRegisterPure, mSearchUser, mBuyProducts, mSellProducts } = require('../static/response.json');
 
 
 

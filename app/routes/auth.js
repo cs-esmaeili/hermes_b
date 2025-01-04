@@ -11,4 +11,8 @@ router.post("/logInPhoneStepTwo", auth.logInPhoneStepTwo);
 router.post("/resetPasswordStepOne", auth.resetPasswordStepOne);
 router.post("/resetPasswordStepTwo", auth.resetPasswordStepTwo);
 
+router.post("/googleLogInCheckNeedRegister", auth.googleLogInCheckNeedRegister);
+router.post("/firstLogInWithGoogleStepOne", auth.firstLogInWithGoogleStepOne);
+router.post("/firstLogInWithGoogleStepTwo", auth.firstLogInWithGoogleStepTwo);
+
 module.exports = router;

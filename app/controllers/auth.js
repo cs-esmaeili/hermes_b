@@ -6,6 +6,7 @@ const { checkDelayTime } = require("../utils/checkTime");
 const bcrypt = require('bcryptjs');
 
 const { mlogInStepOne, mlogInStepTwo } = require('../static/response.json');
+const Token = require("../database/models/Token");
 
 
 exports.logInWithPassword = async (req, res, next) => {
@@ -98,7 +99,7 @@ exports.resetPasswordStepTwo = async (req, res, next) => {
 
         const { _id, token } = await createToken(userName, user.token_id);
         const hashPassword = await bcrypt.hash(password, 10);
-        const userUpdate = await User.updateOne({ _id: user._id }, { token_id: _id, hashPassword });
+        const userUpdate = await User.updateOne({ _id: user._id }, { token_id: _id, password: hashPassword });
         const verifyCodeDelete = await VerifyCode.deleteOne({ user_id: user._id }).lean();
         res.json({
             message: mlogInStepTwo.ok,
@@ -170,5 +171,106 @@ exports.logInPhoneStepTwo = async (req, res, next) => {
         console.log(err);
         res.status(err.statusCode || 422).json(err);
     }
+}
 
+exports.googleLogInCheckNeedRegister = async (req, res, next) => {
+    try {
+        const { email } = await req.body;
+
+
+        const user = await User.findOne({ email });
+
+
+        if (!user) {
+            throw { message: "Need Register", statusCode: 403 };
+        }
+
+        const { _id, token } = await createToken(user.userName, user.token_id);
+        const userUpdate = await User.updateOne({ _id: user._id }, { token_id: _id });
+        res.json({
+            userName: user.userName,
+            message: mlogInStepTwo.ok,
+            token,
+            sessionTime: process.env.USERS_SESSIONS_TIME,
+        });
+
+
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 422).json(err);
+    }
+}
+
+exports.firstLogInWithGoogleStepOne = async (req, res, next) => {
+    try {
+        const { email, phoneNumber } = await req.body;
+
+        const result = await createVerifyCode(null, null, email);
+
+        if (process.env.ONLOCAL === 'true') {
+            console.log(result.code);
+        } else {
+            const sms = await SendVerifyCodeSms(phoneNumber, result.code);
+            if (sms.data.status != 1) {
+                throw { message: mlogInStepOne.fail_1, statusCode: 422 };
+            }
+        }
+
+        res.json({ message: mlogInStepOne.ok, expireTime: process.env.SMS_RESEND_DELAY });
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 422).json(err);
+    }
+}
+
+exports.firstLogInWithGoogleStepTwo = async (req, res, next) => {
+    try {
+
+        const { userName, email, code, password } = await req.body;
+
+        console.log({ userName, email, code, password });
+
+        let user = await User.findOne({ $or: [{ userName }, { email }] });
+
+
+        const verifycode = await VerifyCode.findOne({ email }).lean();
+        if (!verifycode) {
+            throw { message: mlogInStepTwo.fail_2, statusCode: 404 };
+        }
+        const codeCheck = await bcrypt.compare(code, verifycode.code);
+        if (!codeCheck) {
+            throw { message: mlogInStepTwo.fail_3, statusCode: 404 };
+        }
+        const checkTime = checkDelayTime(verifycode.updatedAt, process.env.SMS_RESEND_DELAY, true);
+        if (!checkTime) {
+            throw { message: mlogInStepTwo.fail_2, statusCode: 404 };
+        }
+
+        let finalToken = null;
+        if (!user) {
+            console.log("1");
+            const hashPassword = await bcrypt.hash(password, 10);
+            const { newUser, newToken } = await User.createNormalUser(userName, email, hashPassword);
+            user = newUser;
+            finalToken = newToken;
+        } else {
+            console.log("2");
+
+            const hashPassword = await bcrypt.hash(password, 10);
+            await User.updateOne({ _id: user._id }, { password: hashPassword, userName, email });
+            finalToken = (await Token.findOne({ _id: user.token_id })).token;
+        }
+
+        await VerifyCode.deleteOne({ userName }).lean();
+        await VerifyCode.deleteOne({ email }).lean();
+
+        res.json({
+            message: mlogInStepTwo.ok,
+            token: finalToken,
+            sessionTime: process.env.USERS_SESSIONS_TIME,
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 422).json(err);
+    }
 }

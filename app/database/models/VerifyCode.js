@@ -2,9 +2,16 @@ const mongoose = require("mongoose");
 const { buildSchema } = require("./builder");
 
 module.exports = mongoose.model("VerifyCode", buildSchema({
+    userName: {
+        type: String,
+        unique: true,
+    },
+    email: {
+        type: String,
+        unique: true,
+    },
     user_id: {
         type: mongoose.ObjectId,
-        required: true,
         unique: true,
         ref: 'User',
     },

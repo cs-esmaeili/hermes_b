@@ -70,23 +70,34 @@ exports.getToken = async (token) => {
     return tokenObject;
 }
 
-exports.createVerifyCode = async (user_id) => {
-    const smsCode = await VerifyCode.findOne({ user_id });
 
-    const min = 1000;
-    const max = 9999;
-    const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min + "";
-    const hashRandomNumber = await bcrypt.hash(randomNumber, 10);
+exports.createVerifyCode = async (user_id, userName, email) => {
+    // First, check if a VerifyCode already exists for the given user.
+    const existingCode = await VerifyCode.findOne({ $or: [{ user_id }, { userName }, { email }] });
 
-    if (smsCode) {
-        const checkTime = checkDelayTime(smsCode.updatedAt, process.env.SMS_RESEND_DELAY, false);
+    // If a code exists, check if enough time has passed before sending another one.
+    if (existingCode) {
+        const checkTime = checkDelayTime(existingCode.updatedAt, process.env.SMS_RESEND_DELAY, false);
         if (!checkTime) {
-            // throw { message: mCreateVerifyCode.fail, statusCode: 404 };
+            throw { message: 'Please wait before requesting a new verification code.', statusCode: 404 };
         }
+        // Update the existing verification code with a new one.
+        const randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000 + "";
+        const hashRandomNumber = await bcrypt.hash(randomNumber, 10);
+
         const result = await VerifyCode.updateOne({ user_id }, { code: hashRandomNumber }, { timestamps: true });
         return { result, code: randomNumber };
     } else {
-        const result = await VerifyCode.create({ user_id, code: hashRandomNumber });
+        // If no code exists, create a new verification code.
+        const randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000 + "";
+        const hashRandomNumber = await bcrypt.hash(randomNumber, 10);
+
+
+        let verifycodeCreation = { code: hashRandomNumber };
+        if (user_id) verifycodeCreation.user_id = user_id;
+        if (userName) verifycodeCreation.userName = userName;
+        if (email) verifycodeCreation.email = email;
+        const result = await VerifyCode.create(verifycodeCreation);
         return { result, code: randomNumber };
     }
 }
