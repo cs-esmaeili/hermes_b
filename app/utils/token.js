@@ -72,23 +72,19 @@ exports.getToken = async (token) => {
 
 
 exports.createVerifyCode = async (user_id, userName, email) => {
-    // First, check if a VerifyCode already exists for the given user.
     const existingCode = await VerifyCode.findOne({ $or: [{ user_id }, { userName }, { email }] });
 
-    // If a code exists, check if enough time has passed before sending another one.
     if (existingCode) {
         const checkTime = checkDelayTime(existingCode.updatedAt, process.env.SMS_RESEND_DELAY, false);
         if (!checkTime) {
-            throw { message: 'Please wait before requesting a new verification code.', statusCode: 404 };
+            throw { message: 'ارسال کد جدید در این زمان مقدور نیست', statusCode: 404 };
         }
-        // Update the existing verification code with a new one.
         const randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000 + "";
         const hashRandomNumber = await bcrypt.hash(randomNumber, 10);
 
         const result = await VerifyCode.updateOne({ user_id }, { code: hashRandomNumber }, { timestamps: true });
         return { result, code: randomNumber };
     } else {
-        // If no code exists, create a new verification code.
         const randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000 + "";
         const hashRandomNumber = await bcrypt.hash(randomNumber, 10);
 

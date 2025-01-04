@@ -13,10 +13,10 @@ const seed = async (app) => {
     const blurHash = await getImageBlurHash("1.jpg");
     await User.create({
         token_id: result._id,
-        userName: "09137378602",
+        userName: process.env.ADMIN_USERNAME,
         role_id: role[0]._id,
         password: hashedPassword,
-        email: "cs.esmaeili1@gmail.com",
+        email: "cs.esmaeili@gmail.com",
         data: {
             fullName: "جواد اسماعیلی",
             image: {

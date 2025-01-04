@@ -4,6 +4,7 @@ const VerifyCode = require("../database/models/VerifyCode");
 const { SendVerifyCodeSms } = require("../utils/sms");
 const { checkDelayTime } = require("../utils/checkTime");
 const bcrypt = require('bcryptjs');
+const axios = require('axios');
 
 const { mlogInStepOne, mlogInStepTwo } = require('../static/response.json');
 const Token = require("../database/models/Token");
@@ -173,10 +174,42 @@ exports.logInPhoneStepTwo = async (req, res, next) => {
     }
 }
 
+
+const verifyGoogleToken = async (accessToken, email) => {
+    try {
+      const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+  
+      const userData = response.data;
+  
+      if (userData.email === email && userData.email_verified) {
+        return true; 
+      } else {
+        return false; 
+      }
+    } catch (error) {
+      if (error.code === 'ENOTFOUND') {
+        console.error('Network error: Unable to reach Google API');
+      } else {
+        console.error('Error verifying Google token:', error.message);
+      }
+      return false; 
+    }
+  };
+
 exports.googleLogInCheckNeedRegister = async (req, res, next) => {
     try {
-        const { email } = await req.body;
+        const { email, accessToken } = await req.body;
 
+        const isValid = await verifyGoogleToken(accessToken, email);
+        console.log(isValid);
+
+        if (!isValid) {
+            throw { message: "You are doning wrong ! :)", statusCode: 403 };
+        }
 
         const user = await User.findOne({ email });
 
@@ -228,8 +261,6 @@ exports.firstLogInWithGoogleStepTwo = async (req, res, next) => {
 
         const { userName, email, code, password } = await req.body;
 
-        console.log({ userName, email, code, password });
-
         let user = await User.findOne({ $or: [{ userName }, { email }] });
 
 
@@ -248,14 +279,11 @@ exports.firstLogInWithGoogleStepTwo = async (req, res, next) => {
 
         let finalToken = null;
         if (!user) {
-            console.log("1");
             const hashPassword = await bcrypt.hash(password, 10);
             const { newUser, newToken } = await User.createNormalUser(userName, email, hashPassword);
             user = newUser;
             finalToken = newToken;
         } else {
-            console.log("2");
-
             const hashPassword = await bcrypt.hash(password, 10);
             await User.updateOne({ _id: user._id }, { password: hashPassword, userName, email });
             finalToken = (await Token.findOne({ _id: user.token_id })).token;
