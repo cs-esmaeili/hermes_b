@@ -16,8 +16,6 @@ exports.securityCheck = async (req, res, next) => {
         const check = await checkUserAccess(req.token, route);
         const { permissions, information } = await this.userInformation(req.user._id);
 
-        console.log({ permissions, information });
-
         res.json({
             information,
             permissions,

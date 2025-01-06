@@ -205,10 +205,9 @@ exports.googleLogInCheckNeedRegister = async (req, res, next) => {
         const { email, accessToken } = await req.body;
 
         const isValid = await verifyGoogleToken(accessToken, email);
-        console.log(isValid);
 
         if (!isValid) {
-            throw { message: "You are doning wrong ! :)", statusCode: 403 };
+            throw { message: "مشکلی در ارتباط با گوگل پیش آمد دوباره تلاش کنید", statusCode: 403 };
         }
 
         const user = await User.findOne({ email });
