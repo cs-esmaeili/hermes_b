@@ -1,113 +1,116 @@
+const FileManager = require('../class/filemanager');
 const path = require('path');
-const fs = require('fs');
-const BaseFileDir = path.join(process.cwd(), ...JSON.parse(process.env.STORAGE_LOCATION));
-const { v4: uuidv4 } = require('uuid');
-const { transaction } = require('../database');
-const { mSaveFile, mDeleteFile, mDeleteFolder, mFolderFileList, mCreateFolder, mRenameFolder, mRenameFile } = require('../static/response.json');
-const { getFilesFromFolder } = require('../utils/file');
 
-exports.saveFile = async (req, res, next) => {
-    if (!req.files || Object.keys(req.files).length === 0) {
-        return res.status(400).send('No files were uploaded.');
-    }
-    const { location } = req.body;
-    const fileList = req.files['files[]'];
-    const result = await transaction(async () => {
-        const saveFileandData = async (uploadedFile) => {
-            let saveFileLocation = path.join(BaseFileDir, ...JSON.parse(location));;
-            const newFileName = uuidv4() + path.extname(uploadedFile.name);
-            fs.mkdirSync(saveFileLocation, { recursive: true });
-            uploadedFile.mv(path.join(saveFileLocation, newFileName));
+const fileManager = FileManager.getInstance();
+
+exports.uploadFile = async (req, res, next) => {
+    try {
+
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file provided' });
         }
-        if (typeof fileList === 'object' && fileList !== null && !Array.isArray(fileList)) {
-            await saveFileandData(fileList);
-        } else {
-            for (const fileKey in fileList) {
-                const uploadedFile = fileList[fileKey];
-                await saveFileandData(uploadedFile);
-            }
-        }
-    });
-    if (result === true) {
-        res.send({ message: mSaveFile.ok });
-    } else {
-        res.status(result.statusCode || 422).json({ message: mSaveFile.fail });
+        const { isPrivate = false, folderPath = '', metadata = {} } = req.body;
+
+
+        const file = await fileManager.saveFile(req.file.buffer, {
+            uploaderId: req.user._id, // Assuming you have user in request
+            originalName: req.file.originalname,
+            mimeType: req.file.mimetype,
+            isPrivate: isPrivate === 'true' || isPrivate === true,
+            folderPath,
+            metadata: typeof metadata === 'string' ? JSON.parse(metadata) : metadata
+        });
+
+        res.status(201).json({
+            message: 'File uploaded successfully',
+            file
+        });
+
+    } catch (error) {
+        console.log("Error in File upload : " + error);
     }
-}
+};
 
 exports.deleteFile = async (req, res, next) => {
-    const { location, fileName } = req.body;
-    const result = await transaction(async () => {
-        const fileLocation = path.join(BaseFileDir, location.join(path.sep), fileName);
-        fs.unlinkSync(fileLocation, { recursive: true });
-    });
-    if (res != null) {
-        if (result === true) {
-            res.send({ message: mDeleteFile.ok });
-        } else {
-            res.status(result.statusCode || 422).json({ message: mDeleteFile.fail });
-        }
-    } else {
-        return (true);
+    try {
+        const { fileId } = req.params;
+        const userId = req.user._id; // Assuming you have user in request
+
+        await fileManager.deleteFile(fileId, userId);
+
+        res.json({
+            message: 'File deleted successfully'
+        });
+    } catch (error) {
+        next(error);
     }
-}
+};
 
 exports.deleteFolder = async (req, res, next) => {
-    const { location } = req.body;
     try {
-        const folderLocation = path.join(BaseFileDir, ...location);
-        const files = fs.readdirSync(folderLocation, { recursive: true });
+        const { folderPath } = req.params;
+        const userId = req.user._id;
 
-        for (const file of files) {
-            fs.unlinkSync(folderLocation + path.sep + file, { recursive: true });
-        }
-        fs.rmSync(folderLocation, { recursive: true });
-        res.send({ message: mDeleteFolder.ok });
+        await fileManager.deleteFolder(folderPath, userId);
+
+        res.json({
+            message: 'Folder deleted successfully'
+        });
     } catch (error) {
-        res.status(error.statusCode || 422).json({ message: mDeleteFolder.fail });
+        next(error);
     }
-}
+};
 
-
-exports.folderFileList = async (req, res, next) => {
-    const { location } = req.body;
+exports.listFiles = async (req, res, next) => {
     try {
-        const folderLocation = path.join(BaseFileDir, ...location);
-        const files = await getFilesFromFolder(folderLocation);
-        const baseUrl = process.env.BASE_URL +
-            [JSON.parse(process.env.STORAGE_LOCATION)[2], ...location].join("/") +
-            "/";
-        res.send({ baseUrl, files });
+        const { folderPath = '' } = req.params;
+        const userId = req.user._id;
+
+        const files = await fileManager.folderFileList(folderPath, userId);
+
+        res.json({
+            files
+        });
     } catch (error) {
-        res.status(error.statusCode || 422).json({ message: mFolderFileList.fail });
+        next(error);
     }
-}
+};
 
 exports.createFolder = async (req, res, next) => {
-    const { location, folderName } = req.body;
     try {
-        const folderLocation = path.join(BaseFileDir, ...location);
-        fs.mkdirSync((folderLocation + "/" + folderName), { recursive: true });
-        res.send({ message: mCreateFolder.ok });
-    } catch (error) {
-        res.status(error.statusCode || 422).json({ message: mCreateFolder.fail });
-    }
-}
+        const { folderPath } = req.body;
 
-exports.rename = async (req, res, next) => {
-    const { location, oldName, newName } = req.body;
-    const result = await transaction(async () => {
-        const oldLocation = path.join(BaseFileDir, location.join(), oldName);
-        const newLocation = path.join(BaseFileDir, location.join(), newName);
-        if (fs.existsSync(newLocation)) {
-            throw new Error();
+        if (!folderPath) {
+            return res.status(400).json({ message: 'Folder path is required' });
         }
-        fs.renameSync(oldLocation, newLocation, { recursive: true });
 
-    });
-    if (result === true) {
-        res.send({ message: mRenameFile.ok });
-    } else {
-        res.status(result.statusCode || 422).json({ message: mRenameFile.fail });
+        await fileManager.createFolder(folderPath);
+
+        res.status(201).json({
+            message: 'Folder created successfully'
+        });
+    } catch (error) {
+        next(error);
     }
-}
+};
+
+exports.renameFile = async (req, res, next) => {
+    try {
+        const { fileId } = req.params;
+        const { newName } = req.body;
+        const userId = req.user._id;
+
+        if (!newName) {
+            return res.status(400).json({ message: 'New name is required' });
+        }
+
+        const file = await fileManager.rename(fileId, newName, userId);
+
+        res.json({
+            message: 'File renamed successfully',
+            file
+        });
+    } catch (error) {
+        next(error);
+    }
+};

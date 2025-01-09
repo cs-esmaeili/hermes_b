@@ -1,14 +1,27 @@
 const { Router } = require("express");
-
-const file = require("../controllers/file");
+const multer = require('multer');
+const fileController = require("../controllers/file");
 
 const router = new Router();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
+});
 
-router.post("/saveFile", file.saveFile);
-router.post("/deleteFile", file.deleteFile);
-router.post("/deleteFolder", file.deleteFolder);
-router.post("/folderFileList", file.folderFileList);
-router.post("/createFolder", file.createFolder);
-router.post("/rename", file.rename);
+
+// File routes
+router.post('/uploadFile', upload.single('file'), fileController.uploadFile);
+
+
+router.delete('/deleteFile/:fileId', fileController.deleteFile);
+router.put('/renameFile/:fileId', fileController.renameFile);
+
+// Folder routes
+router.post('/createFolder', fileController.createFolder);
+router.delete('/deleteFolder/:folderPath(*)', fileController.deleteFolder);
+router.get('/listFiles/:folderPath(*)?', fileController.listFiles);
+
 
 module.exports = router;

@@ -30,6 +30,8 @@ exports.checkRoutePermission = async (req, res, next) => {
         req.user = user;
         next();
     } catch (err) {
-        res.status(err.statusCode || 500).json(err);
+        console.log(err);
+        
+        res.status(err.statusCode || 500).json({err});
     }
 }

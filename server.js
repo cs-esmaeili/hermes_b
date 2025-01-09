@@ -1,7 +1,6 @@
 const path = require("path");
 const dotenv = require('dotenv').config();
 var cors = require('cors');
-const fileUpload = require("express-fileupload");
 const express = require("express");
 const { connect } = require('./app/database');
 const category = require("./app/routes/category");
@@ -19,8 +18,10 @@ const { backUpService } = require('./app/services/backUp');
 const { initSocketService } = require('./app/services/socketHandlers');
 const { LogService } = require('./app/services/logger');
 const { reloadJobs } = require('./app/utils/sms');
-
 const { checkRoutePermission } = require("./app/middlewares/checkAuth");
+const fileManager = require('./app/class/filemanager');
+const fileManagerConfig = require('./config/fileManagerConfig');
+
 
 (async () => {
   const app = await express();
@@ -61,10 +62,6 @@ const { checkRoutePermission } = require("./app/middlewares/checkAuth");
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  //* File Upload Middleware
-  app.use(fileUpload());
-
-
   app.use(cors());
 
   //* Static Folder
@@ -74,12 +71,13 @@ const { checkRoutePermission } = require("./app/middlewares/checkAuth");
   //* Routes
   app.use("/auth", auth);
   app.use(checkRoutePermission);
+  app.use("/file", file);
   app.use("/user", user);
   app.use("/role", role);
   app.use("/permission", permission);
   app.use("/category", category);
   app.use("/post", post);
-  app.use("/file", file);
+
   app.use("/product", product);
   app.use("/smsTemplate", smsTemplate);
   app.use("/smsHistory", smsHistory);
@@ -90,8 +88,11 @@ const { checkRoutePermission } = require("./app/middlewares/checkAuth");
   //* Database connection
   await connect(app);
 
-  const PORT = process.env.PORT || 3000;
+  // FileManager init 
+  fileManager.getInstance().initialize(fileManagerConfig);
 
+
+  const PORT = process.env.PORT || 3000;
 
   server.listen(PORT, () => {
     console.log(`Server running on port : ${PORT}`);

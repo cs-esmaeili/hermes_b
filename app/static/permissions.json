@@ -127,7 +127,7 @@
         "name": "Dashborad Page",
         "disc": "This is Permission is need for see Dashborad Page "
     },
-    "/dashboard/user": {
+    "/dashboard/users": {
         "name": "Dashborad Page",
         "disc": "This is Permission is need for see Dashborad Page "
     },
@@ -219,7 +219,8 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
-    "/file/saveFile": {
+
+    "/file/uploadFile": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
@@ -243,6 +244,7 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
+
     "/user/userInformation": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
