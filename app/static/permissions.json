@@ -240,6 +240,10 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
+    "/file/listFiles": {
+        "name": "Role List",
+        "disc": "This is Permission is need for get Roles "
+    },
 
     "/user/userInformation": {
         "name": "Role List",

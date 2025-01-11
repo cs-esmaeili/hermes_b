@@ -65,6 +65,11 @@ class FileManager {
             metadata = {}
         } = options;
 
+        if (folderPath.includes('..') || path.isAbsolute(folderPath)) {
+            throw new Error('Invalid folder path');
+        }
+
+
         const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
         const fullFolderPath = path.join(baseDir, folderPath);
 
@@ -133,6 +138,10 @@ class FileManager {
     async deleteFolder(folderPath, userId, isPrivate = false, userIsAdmin) {
         this.#checkInitialized();
 
+        if (folderPath.includes('..') || path.isAbsolute(folderPath)) {
+            throw new Error('Invalid folder path');
+        }
+
         const files = await this.File.find({
             $expr: {
                 $eq: [
@@ -180,37 +189,80 @@ class FileManager {
     }
 
 
-    async folderFileList(folderPath, userId) {
+
+    async folderFileList(folderPath, userId, isPrivate, userIsAdmin) {
         this.#checkInitialized();
+
+        if (folderPath.includes('..') || path.isAbsolute(folderPath)) {
+            throw new Error('Invalid folder path');
+        }
+
+        const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
+        const fullFolderPath = path.join(baseDir, folderPath);
+
+        try {
+            const folderExists = await fs.stat(fullFolderPath);
+            if (!folderExists.isDirectory()) {
+                throw new Error('Path is not a directory');
+            }
+        } catch (err) {
+            throw new Error('Folder does not exist');
+        }
+
         const files = await this.File.find({
-            storagePath: { $regex: `^${folderPath}/` }
+            $expr: {
+                $eq: [
+                    { $substr: ['$storagePath', 0, path.join(folderPath).length] },
+                    path.join(folderPath)
+                ]
+            },
+            isPrivate,
         });
 
+        const directoryEntries = await fs.readdir(fullFolderPath, { withFileTypes: true });
+        const folders = directoryEntries
+            .filter(entry => entry.isDirectory())
+            .map(folder => ({
+                name: folder.name,
+                type: 'folder',
+                fullPath: path.join(folderPath, folder.name)
+            }));
+
         const result = [];
+
+        // Process files
         for (const file of files) {
-            if (!file.isPrivate) {
-                result.push(file);
+            if (!file.isPrivate || userIsAdmin) {
+                result.push({ ...file.toObject(), type: 'file' });
             } else {
                 const access = await this.FileAccess.findOne({
                     file_id: file._id,
-                    'accessList.userId': userId
+                    user_id: userId,
+                    accessLevel: 'read'
                 });
+
                 if (access) {
                     result.push({
                         ...file.toObject(),
-                        accessLevel: access.accessList.find(a =>
-                            a.userId.toString() === userId.toString()
-                        ).accessLevel
+                        accessLevel: access.accessList.find(
+                            a => a.userId.toString() === userId.toString()
+                        ).accessLevel,
+                        type: 'file'
                     });
                 }
             }
         }
 
-        return result;
+        return [...folders, ...result];
     }
 
     async createFolder(folderPath, isPrivate = false) {
         this.#checkInitialized();
+
+        if (folderPath.includes('..') || path.isAbsolute(folderPath)) {
+            throw new Error('Invalid folder path');
+        }
+
         if (isPrivate) {
             await fs.mkdir(path.join(this.privateBaseDir, folderPath), { recursive: true });
         } else {
