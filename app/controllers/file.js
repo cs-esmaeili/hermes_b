@@ -48,10 +48,10 @@ exports.deleteFile = async (req, res, next) => {
 
 exports.deleteFolder = async (req, res, next) => {
     try {
-        const { folderPath } = req.params;
+        const { folderPath, isPrivate } = req.body;
         const userId = req.user._id;
 
-        await fileManager.deleteFolder(folderPath, userId);
+        await fileManager.deleteFolder(folderPath, userId, isPrivate, true);
 
         res.json({
             message: 'Folder deleted successfully'

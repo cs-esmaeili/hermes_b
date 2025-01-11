@@ -16,9 +16,9 @@ router.post('/uploadFile', upload.single('file'), fileController.uploadFile);
 router.post('/deleteFile', fileController.deleteFile);
 router.post('/rename', fileController.rename);
 router.post('/createFolder', fileController.createFolder);
+router.post('/deleteFolder', fileController.deleteFolder);
 
 // Folder routes
-router.delete('/deleteFolder/:folderPath(*)', fileController.deleteFolder);
 router.get('/listFiles/:folderPath(*)?', fileController.listFiles);
 
 

@@ -130,29 +130,36 @@ class FileManager {
         });
     }
 
-    async deleteFolder(folderPath, userId) {
+    async deleteFolder(folderPath, userId, isPrivate = false, userIsAdmin) {
         this.#checkInitialized();
+
         const files = await this.File.find({
-            storagePath: { $regex: `^${folderPath}/` }
+            $expr: {
+                $eq: [
+                    { $substr: ['$storagePath', 0, path.join(folderPath).length] },
+                    path.join(folderPath)
+                ]
+            },
+            isPrivate,
         });
 
+
         for (const file of files) {
-            if (file.isPrivate) {
+            if (file.isPrivate && !userIsAdmin) {
                 const access = await this.FileAccess.findOne({
                     file_id: file._id,
-                    'accessList.userId': userId,
-                    'accessList.accessLevel': 'write'
+                    user_id: userId,
+                    accessLevel: 'write'
                 });
                 if (!access) {
-                    throw new Error(`Access denied for file: ${file.originalName}`);
+                    throw new Error('Access denied');
                 }
             }
         }
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
+        await transaction(async () => {
+            const fileIds = files.map(file => file._id);
 
-        try {
             for (const file of files) {
                 const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
                 const fullFilePath = path.join(baseDir, file.storagePath);
@@ -160,26 +167,18 @@ class FileManager {
             }
 
             await this.File.deleteMany({
-                storagePath: { $regex: `^${folderPath}/` }
-            }, { session });
+                _id: { $in: fileIds }
+            });
 
-            const fileIds = files.map(file => file._id);
             await this.FileAccess.deleteMany({
                 file_id: { $in: fileIds }
-            }, { session });
+            });
 
-            await fs.rmdir(path.join(this.publicBaseDir, folderPath), { recursive: true });
-            await fs.rmdir(path.join(this.privateBaseDir, folderPath), { recursive: true });
-
-            await session.commitTransaction();
-            return true;
-        } catch (error) {
-            await session.abortTransaction();
-            throw error;
-        } finally {
-            session.endSession();
-        }
+            const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
+            await fs.rm(path.join(baseDir, folderPath), { recursive: true, force: true });
+        });
     }
+
 
     async folderFileList(folderPath, userId) {
         this.#checkInitialized();

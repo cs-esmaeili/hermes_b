@@ -236,6 +236,10 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
+    "/file/deleteFolder": {
+        "name": "Role List",
+        "disc": "This is Permission is need for get Roles "
+    },
 
     "/user/userInformation": {
         "name": "Role List",
