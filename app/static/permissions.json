@@ -224,15 +224,15 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
-    "/file/deleteFolder": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
     "/file/deleteFile": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
     "/file/rename": {
+        "name": "Role List",
+        "disc": "This is Permission is need for get Roles "
+    },
+    "/file/createFolder": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },

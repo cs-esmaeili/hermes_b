@@ -78,13 +78,13 @@ exports.listFiles = async (req, res, next) => {
 
 exports.createFolder = async (req, res, next) => {
     try {
-        const { folderPath } = req.body;
+        const { folderPath, isPrivate } = req.body;
 
         if (!folderPath) {
             return res.status(400).json({ message: 'Folder path is required' });
         }
 
-        await fileManager.createFolder(folderPath);
+        await fileManager.createFolder(folderPath, isPrivate);
 
         res.status(201).json({
             message: 'Folder created successfully'
@@ -103,7 +103,7 @@ exports.rename = async (req, res, next) => {
             return res.status(400).json({ message: 'New name is required' });
         }
 
-        const file = await fileManager.rename(file_id, newName, userId);
+        const file = await fileManager.rename(file_id, newName, userId, true);
 
         res.json({
             message: 'File renamed successfully',

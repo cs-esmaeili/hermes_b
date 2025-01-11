@@ -210,14 +210,17 @@ class FileManager {
         return result;
     }
 
-    async createFolder(folderPath) {
+    async createFolder(folderPath, isPrivate = false) {
         this.#checkInitialized();
-        await fs.mkdir(path.join(this.publicBaseDir, folderPath), { recursive: true });
-        await fs.mkdir(path.join(this.privateBaseDir, folderPath), { recursive: true });
+        if (isPrivate) {
+            await fs.mkdir(path.join(this.privateBaseDir, folderPath), { recursive: true });
+        } else {
+            await fs.mkdir(path.join(this.publicBaseDir, folderPath), { recursive: true });
+        }
         return true;
     }
 
-    async rename(fileId, newName, userId, userIsAdmin) {
+    async rename(fileId, newName, userId, userIsAdmin = false) {
         this.#checkInitialized();
         const file = await this.File.findById(fileId);
 
@@ -241,15 +244,14 @@ class FileManager {
         const newStoragePath = path.join(folderPath, `${Date.now()}-${newName}`);
         const newFullPath = path.join(baseDir, newStoragePath);
 
-        try {
-            await fs.rename(oldPath, newFullPath);
+        const result = transaction(async () => {
             file.originalName = newName;
             file.storagePath = newStoragePath;
             await file.save();
+            await fs.rename(oldPath, newFullPath);
             return file;
-        } catch (error) {
-            throw error;
-        }
+        });
+        return result;
     }
 }
 
