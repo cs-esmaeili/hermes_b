@@ -263,9 +263,7 @@ class FileManager {
     async createFolder(folderPath, isPrivate = false) {
         this.#checkInitialized();
 
-        if (folderPath.includes('..') || path.isAbsolute(folderPath)) {
-            throw new Error('Invalid folder path');
-        }
+        folderPath = await this.createPath(folderPath);
 
         if (isPrivate) {
             await fs.mkdir(path.join(this.privateBaseDir, folderPath), { recursive: true });
