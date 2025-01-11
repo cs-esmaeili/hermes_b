@@ -54,21 +54,28 @@ class FileManager {
             throw new Error('FileManager not initialized. Call initialize() first');
         }
     }
-    async saveFile(fileBuffer, options) {
-        this.#checkInitialized();
-        const {
-            uploaderId,
-            originalName,
-            mimeType,
-            isPrivate,
-            folderPath = '',
-            metadata = {}
-        } = options;
 
-        if (folderPath.includes('..') || path.isAbsolute(folderPath)) {
+    async createPath(pathSegments) {
+
+        pathSegments = JSON.parse(pathSegments);
+
+        if (pathSegments.includes('..')) {
             throw new Error('Invalid folder path');
         }
 
+        if (!Array.isArray(pathSegments) || pathSegments.length === 0) {
+            throw new Error('Invalid pathSegments: must be a non-empty array of strings');
+        }
+        const finalPath = await path.join(...pathSegments);
+        return finalPath;
+    }
+
+    async saveFile(fileBuffer, options) {
+        this.#checkInitialized();
+
+        const { uploaderId, originalName, mimeType, isPrivate, metadata = {} } = options;
+        let { folderPath = [] } = options;
+        folderPath = await this.createPath(folderPath);
 
         const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
         const fullFolderPath = path.join(baseDir, folderPath);
@@ -80,8 +87,6 @@ class FileManager {
         const fullFilePath = path.join(baseDir, storagePath);
 
         transaction(async () => {
-            await fs.writeFile(fullFilePath, fileBuffer);
-
             const file = await this.File.create([{
                 uploader_id: uploaderId,
                 originalName,
@@ -101,6 +106,7 @@ class FileManager {
                     }]
                 }]);
             }
+            await fs.writeFile(fullFilePath, fileBuffer);
         });
     }
 
