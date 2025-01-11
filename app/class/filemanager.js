@@ -199,9 +199,7 @@ class FileManager {
     async folderFileList(folderPath, userId, isPrivate, userIsAdmin) {
         this.#checkInitialized();
 
-        if (folderPath.includes('..') || path.isAbsolute(folderPath)) {
-            throw new Error('Invalid folder path');
-        }
+        folderPath = await this.createPath(folderPath);
 
         const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
         const fullFolderPath = path.join(baseDir, folderPath);
