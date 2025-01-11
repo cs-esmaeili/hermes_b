@@ -56,8 +56,9 @@ class FileManager {
     }
 
     async createPath(pathSegments) {
-
-        pathSegments = JSON.parse(pathSegments);
+        if (typeof pathSegments == "string") {
+            pathSegments = JSON.parse(pathSegments);
+        }
 
         if (pathSegments.includes('..')) {
             throw new Error('Invalid folder path');
@@ -112,6 +113,7 @@ class FileManager {
 
     async deleteFile(fileId, userId, userIsAdmin = false) {
         this.#checkInitialized();
+
         const file = await this.File.findById(fileId);
         if (!file) {
             throw new Error('File not found');
@@ -144,15 +146,13 @@ class FileManager {
     async deleteFolder(folderPath, userId, isPrivate = false, userIsAdmin) {
         this.#checkInitialized();
 
-        if (folderPath.includes('..') || path.isAbsolute(folderPath)) {
-            throw new Error('Invalid folder path');
-        }
+        folderPath = await this.createPath(folderPath);
 
         const files = await this.File.find({
             $expr: {
                 $eq: [
-                    { $substr: ['$storagePath', 0, path.join(folderPath).length] },
-                    path.join(folderPath)
+                    { $substr: ['$storagePath', 0, folderPath.length] },
+                    folderPath
                 ]
             },
             isPrivate,
