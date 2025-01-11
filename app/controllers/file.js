@@ -33,10 +33,10 @@ exports.uploadFile = async (req, res, next) => {
 
 exports.deleteFile = async (req, res, next) => {
     try {
-        const { fileId } = req.params;
-        const userId = req.user._id; // Assuming you have user in request
+        const { file_id } = req.body;
+        const userId = req.user._id;
 
-        await fileManager.deleteFile(fileId, userId);
+        await fileManager.deleteFile(file_id, userId, true);
 
         res.json({
             message: 'File deleted successfully'

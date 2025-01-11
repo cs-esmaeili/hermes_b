@@ -1,7 +1,7 @@
 // src/services/FileManager.js
 const fs = require('fs').promises;
 const path = require('path');
-const mongoose = require('mongoose');
+const { transaction } = require('../database');
 const File = require('../database/models/File');
 const FileAccess = require('../database/models/FileAccess');
 
@@ -14,14 +14,15 @@ class FileManager {
         FileManager.instance = this;
     }
 
-    initialize(config) {
+    initialize() {
         if (this.initialized) {
             console.warn('FileManager already initialized');
             return this;
         }
 
-        this.publicBaseDir = config.publicBaseDir;
-        this.privateBaseDir = config.privateBaseDir;
+        this.publicBaseDir = path.join(process.cwd(), process.env.PUBLIC_DIR);
+        this.privateBaseDir = path.join(process.cwd(), process.env.PRIVATE_DIR);
+
         this.File = File;
         this.FileAccess = FileAccess;
 
@@ -73,10 +74,7 @@ class FileManager {
         const storagePath = path.join(folderPath, uniqueFileName);
         const fullFilePath = path.join(baseDir, storagePath);
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
-        try {
+        transaction(async () => {
             await fs.writeFile(fullFilePath, fileBuffer);
 
             const file = await this.File.create([{
@@ -87,7 +85,7 @@ class FileManager {
                 size: fileBuffer.length,
                 isPrivate,
                 metadata
-            }], { session });
+            }]);
 
             if (isPrivate) {
                 await this.FileAccess.create([{
@@ -96,31 +94,23 @@ class FileManager {
                         userId: uploaderId,
                         accessLevel: 'write'
                     }]
-                }], { session });
+                }]);
             }
-
-            await session.commitTransaction();
-            return file[0];
-        } catch (error) {
-            await session.abortTransaction();
-            throw error;
-        } finally {
-            session.endSession();
-        }
+        });
     }
 
-    async deleteFile(fileId, userId) {
+    async deleteFile(fileId, userId, userIsAdmin = false) {
         this.#checkInitialized();
         const file = await this.File.findById(fileId);
         if (!file) {
             throw new Error('File not found');
         }
 
-        if (file.isPrivate) {
+        if (file.isPrivate && !userIsAdmin) {
             const access = await this.FileAccess.findOne({
                 file_id: fileId,
-                'accessList.userId': userId,
-                'accessList.accessLevel': 'write'
+                user_id: userId,
+                accessLevel: 'write'
             });
             if (!access) {
                 throw new Error('Access denied');
@@ -130,23 +120,14 @@ class FileManager {
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
         const fullFilePath = path.join(baseDir, file.storagePath);
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
-        try {
-            await fs.unlink(fullFilePath);
-            await this.File.deleteOne({ _id: fileId }, { session });
+        transaction(async () => {
+            await this.File.deleteOne({ _id: fileId });
             if (file.isPrivate) {
-                await this.FileAccess.deleteOne({ file_id: fileId }, { session });
+                await this.FileAccess.deleteOne({ file_id: fileId });
             }
-            await session.commitTransaction();
+            await fs.unlink(fullFilePath);
             return true;
-        } catch (error) {
-            await session.abortTransaction();
-            throw error;
-        } finally {
-            session.endSession();
-        }
+        });
     }
 
     async deleteFolder(folderPath, userId) {

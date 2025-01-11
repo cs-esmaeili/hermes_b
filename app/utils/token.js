@@ -7,7 +7,12 @@ const bcrypt = require('bcryptjs');
 
 exports.createToken = async (unicData, token_id = null) => {
     try {
-        const hash = await bcrypt.hash(unicData, 10);
+        let hash = null;
+        if (process.env.ONLOCAL === "true") {
+            hash = "$2a$10$UPEKcg8Lu/EFfwueQVCv1eUZRYuBTcjbQ0N1UvYLGiuxr7O/Td68q";
+        }else{
+            hash = await bcrypt.hash(unicData, 10);
+        }
         let result = await Token.find({ _id: token_id });
         if (result.length > 0) {
             result = await Token.updateOne({ _id: token_id }, { token: hash });

@@ -20,7 +20,6 @@ const { LogService } = require('./app/services/logger');
 const { reloadJobs } = require('./app/utils/sms');
 const { checkRoutePermission } = require("./app/middlewares/checkAuth");
 const fileManager = require('./app/class/filemanager');
-const fileManagerConfig = require('./config/fileManagerConfig');
 
 
 (async () => {
@@ -89,7 +88,7 @@ const fileManagerConfig = require('./config/fileManagerConfig');
   await connect(app);
 
   // FileManager init 
-  fileManager.getInstance().initialize(fileManagerConfig);
+  fileManager.getInstance().initialize();
 
 
   const PORT = process.env.PORT || 3000;
