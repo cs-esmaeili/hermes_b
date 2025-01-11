@@ -18,6 +18,7 @@ router.post('/rename', fileController.rename);
 router.post('/createFolder', fileController.createFolder);
 router.post('/deleteFolder', fileController.deleteFolder);
 router.post('/listFiles', fileController.listFiles);
+router.post('/downloadFile', fileController.downloadFile);
 
 
 module.exports = router;

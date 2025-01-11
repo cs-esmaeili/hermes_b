@@ -306,6 +306,31 @@ class FileManager {
         });
         return result;
     }
+
+    async getFileUrl(fileId, userId, userIsAdmin = false) {
+        this.#checkInitialized();
+
+        const file = await this.File.findById(fileId);
+
+        if (!file) {
+            throw new Error('File not found');
+        }
+
+        const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
+
+        if (file.isPrivate && !userIsAdmin) {
+            const access = await this.FileAccess.findOne({
+                file_id: fileId,
+                user_id: userId,
+                accessLevel: { $in: ['read', 'write'] }
+            });
+
+            if (!access) {
+                throw new Error('Access denied to private file');
+            }
+        }
+        return (baseDir + path.sep + file.storagePath);
+    }
 }
 
 module.exports = FileManager;

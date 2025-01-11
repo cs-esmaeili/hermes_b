@@ -113,3 +113,14 @@ exports.rename = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.downloadFile = async (req, res, next) => {
+    try {
+        const { file_id } = req.body;
+        const userId = req.user._id;
+        const file = await fileManager.getFileUrl(file_id, userId, true);
+        res.download(file)
+    } catch (error) {
+        next(error);
+    }
+}
