@@ -217,18 +217,18 @@ class FileManager {
         return true;
     }
 
-    async rename(fileId, newName, userId) {
+    async rename(fileId, newName, userId, userIsAdmin) {
         this.#checkInitialized();
         const file = await this.File.findById(fileId);
+
         if (!file) {
             throw new Error('File not found');
         }
-
-        if (file.isPrivate) {
+        if (file.isPrivate && !userIsAdmin) {
             const access = await this.FileAccess.findOne({
                 file_id: fileId,
-                'accessList.userId': userId,
-                'accessList.accessLevel': 'write'
+                user_id: userId,
+                accessLevel: 'write'
             });
             if (!access) {
                 throw new Error('Access denied');

@@ -13,7 +13,7 @@ exports.uploadFile = async (req, res, next) => {
 
 
         const file = await fileManager.saveFile(req.file.buffer, {
-            uploaderId: req.user._id, // Assuming you have user in request
+            uploaderId: req.user._id,
             originalName: req.file.originalname,
             mimeType: req.file.mimetype,
             isPrivate: isPrivate === 'true' || isPrivate === true,
@@ -94,17 +94,16 @@ exports.createFolder = async (req, res, next) => {
     }
 };
 
-exports.renameFile = async (req, res, next) => {
+exports.rename = async (req, res, next) => {
     try {
-        const { fileId } = req.params;
-        const { newName } = req.body;
+        const { file_id, newName } = req.body;
         const userId = req.user._id;
 
         if (!newName) {
             return res.status(400).json({ message: 'New name is required' });
         }
 
-        const file = await fileManager.rename(fileId, newName, userId);
+        const file = await fileManager.rename(file_id, newName, userId);
 
         res.json({
             message: 'File renamed successfully',
