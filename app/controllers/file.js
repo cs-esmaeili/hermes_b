@@ -63,14 +63,12 @@ exports.deleteFolder = async (req, res, next) => {
 
 exports.listFiles = async (req, res, next) => {
     try {
-        const { folderPath = [], isPrivate } = req.body;
+        const { folderPath, isPrivate } = req.body;
         const userId = req.user._id;
 
         const files = await fileManager.folderFileList(folderPath, userId, isPrivate, true);
 
-        res.json({
-            files
-        });
+        res.json({ files });
     } catch (error) {
         next(error);
     }

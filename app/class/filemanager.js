@@ -4,6 +4,7 @@ const path = require('path');
 const { transaction } = require('../database');
 const File = require('../database/models/File');
 const FileAccess = require('../database/models/FileAccess');
+const { log } = require('console');
 
 class FileManager {
     constructor() {
@@ -26,7 +27,6 @@ class FileManager {
         this.File = File;
         this.FileAccess = FileAccess;
 
-        // Create storage directories if they don't exist
         this.#createStorageDirectories();
 
         this.initialized = true;
@@ -55,19 +55,27 @@ class FileManager {
         }
     }
 
-    async createPath(pathSegments) {
-        if (typeof pathSegments == "string") {
-            pathSegments = JSON.parse(pathSegments);
-        }
+    async convertPathToArray(path) {
+        const pathArray = path
+            .split(/[\/\\]+/) // Match one or more '/' or '\' characters
+            .filter((item) => item.trim() !== "")
+            .map((item) => item.trim());
+        return pathArray.length === 0 ? [""] : pathArray;
+    }
 
-        if (pathSegments.includes('..')) {
+
+    async createPath(targetPath) {
+
+        targetPath = await this.convertPathToArray(targetPath);
+
+        if (targetPath.includes('..')) {
             throw new Error('Invalid folder path');
         }
 
-        if (!Array.isArray(pathSegments) || pathSegments.length === 0) {
-            throw new Error('Invalid pathSegments: must be a non-empty array of strings');
+        if (!Array.isArray(targetPath) || targetPath.length === 0) {
+            throw new Error('Invalid targetPath: must be a non-empty array of strings');
         }
-        const finalPath = await path.join(...pathSegments);
+        const finalPath = await path.join(...targetPath);
         return finalPath;
     }
 
@@ -75,7 +83,7 @@ class FileManager {
         this.#checkInitialized();
 
         const { uploaderId, originalName, mimeType, isPrivate, metadata = {} } = options;
-        let { folderPath = [] } = options;
+        let { folderPath } = options;
         folderPath = await this.createPath(folderPath);
 
         const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
