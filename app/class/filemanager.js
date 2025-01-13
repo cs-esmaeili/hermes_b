@@ -20,13 +20,14 @@ class FileManager {
             return this;
         }
 
-        this.publicBaseDir = path.join(process.cwd(), process.env.PUBLIC_DIR);
-        this.privateBaseDir = path.join(process.cwd(), process.env.PRIVATE_DIR);
+
+        this.publicBaseDir = path.join(process.cwd(), JSON.parse(process.env.PUBLIC_DIR).join(path.sep));
+        this.privateBaseDir = path.join(process.cwd(), JSON.parse(process.env.PRIVATE_DIR).join(path.sep));
 
         this.File = File;
         this.FileAccess = FileAccess;
 
-        // Create storage directories if they don't exist
+
         this.#createStorageDirectories();
 
         this.initialized = true;
@@ -84,20 +85,19 @@ class FileManager {
         await fs.mkdir(fullFolderPath, { recursive: true });
 
         const uniqueFileName = `${Date.now()}-${originalName}`;
-        const storagePath = path.join(folderPath, uniqueFileName);
-        const fullFilePath = path.join(baseDir, storagePath);
+        const fullFilePath = path.join(baseDir, path.join(folderPath, uniqueFileName));
 
         transaction(async () => {
             const file = await this.File.create([{
                 uploader_id: uploaderId,
                 originalName,
-                storagePath,
+                hostName: uniqueFileName,
+                storagePath: folderPath,
                 mimeType,
                 size: fileBuffer.length,
                 isPrivate,
                 metadata
             }]);
-
             if (isPrivate) {
                 await this.FileAccess.create([{
                     file_id: file[0]._id,
@@ -131,7 +131,7 @@ class FileManager {
         }
 
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
-        const fullFilePath = path.join(baseDir, file.storagePath);
+        const fullFilePath = path.join(baseDir, file.storagePath, file.hostName);
 
         transaction(async () => {
             await this.File.deleteOne({ _id: fileId });
@@ -155,7 +155,6 @@ class FileManager {
                     folderPath
                 ]
             },
-            isPrivate,
         });
 
 
@@ -177,7 +176,7 @@ class FileManager {
 
             for (const file of files) {
                 const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
-                const fullFilePath = path.join(baseDir, file.storagePath);
+                const fullFilePath = path.join(baseDir, file.storagePath, file.hostName);
                 await fs.unlink(fullFilePath);
             }
 
@@ -214,12 +213,7 @@ class FileManager {
         }
 
         const files = await this.File.find({
-            $expr: {
-                $eq: [
-                    { $substr: ['$storagePath', 0, path.join(folderPath).length] },
-                    path.join(folderPath)
-                ]
-            },
+            storagePath: folderPath,
             isPrivate,
         });
 
@@ -273,7 +267,7 @@ class FileManager {
         return true;
     }
 
-    async rename(fileId, newName, userId, userIsAdmin = false) {
+    async renameFile(fileId, newName, userId, userIsAdmin = false) {
         this.#checkInitialized();
         const file = await this.File.findById(fileId);
 
@@ -293,15 +287,14 @@ class FileManager {
 
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
         const oldPath = path.join(baseDir, file.storagePath);
-        const folderPath = path.dirname(file.storagePath);
-        const newStoragePath = path.join(folderPath, `${Date.now()}-${newName}`);
-        const newFullPath = path.join(baseDir, newStoragePath);
+        const oldName = file.hostName;
+        newName = `${Date.now()}-${newName}`;
+
 
         const result = transaction(async () => {
-            file.originalName = newName;
-            file.storagePath = newStoragePath;
+            file.hostName = newName;
             await file.save();
-            await fs.rename(oldPath, newFullPath);
+            await fs.rename(path.join(oldPath, oldName), path.join(oldPath, newName));
             return file;
         });
         return result;
