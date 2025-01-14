@@ -4,7 +4,6 @@ const path = require('path');
 const { transaction } = require('../database');
 const File = require('../database/models/File');
 const FileAccess = require('../database/models/FileAccess');
-const { log } = require('console');
 
 class FileManager {
     constructor() {
@@ -55,35 +54,27 @@ class FileManager {
         }
     }
 
-    async convertPathToArray(path) {
-        const pathArray = path
-            .split(/[\/\\]+/) // Match one or more '/' or '\' characters
-            .filter((item) => item.trim() !== "")
-            .map((item) => item.trim());
-        return pathArray.length === 0 ? [""] : pathArray;
-    }
+    async createPath(pathSegments) {
+        if (typeof pathSegments == "string") {
+            pathSegments = JSON.parse(pathSegments);
+        }
 
-
-    async createPath(targetPath) {
-
-        targetPath = await this.convertPathToArray(targetPath);
-
-        if (targetPath.includes('..')) {
+        if (pathSegments.includes('..')) {
             throw new Error('Invalid folder path');
         }
 
-        if (!Array.isArray(targetPath) || targetPath.length === 0) {
-            throw new Error('Invalid targetPath: must be a non-empty array of strings');
+        if (!Array.isArray(pathSegments) || pathSegments.length === 0) {
+            throw new Error('Invalid pathSegments: must be a non-empty array of strings');
         }
-        const finalPath = await path.join(...pathSegments);
-        return finalPath;
+
+        return pathSegments;
     }
 
     async saveFile(fileBuffer, options) {
         this.#checkInitialized();
 
         const { uploaderId, originalName, mimeType, isPrivate, metadata = {} } = options;
-        let { folderPath } = options;
+        let { folderPath = [] } = options;
         folderPath = await this.createPath(folderPath);
 
         const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
