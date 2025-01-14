@@ -14,7 +14,8 @@ const upload = multer({
 // File routes
 router.post('/uploadFile', upload.single('file'), fileController.uploadFile);
 router.post('/deleteFile', fileController.deleteFile);
-router.post('/rename', fileController.rename);
+router.post('/renameFile', fileController.renameFile);
+router.post('/renameFolder', fileController.renameFolder);
 router.post('/createFolder', fileController.createFolder);
 router.post('/deleteFolder', fileController.deleteFolder);
 router.post('/listFiles', fileController.listFiles);
