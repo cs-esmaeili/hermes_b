@@ -20,13 +20,11 @@ class FileManager {
             return this;
         }
 
-
         this.publicBaseDir = path.join(process.cwd(), JSON.parse(process.env.PUBLIC_DIR).join(path.sep));
         this.privateBaseDir = path.join(process.cwd(), JSON.parse(process.env.PRIVATE_DIR).join(path.sep));
 
         this.File = File;
         this.FileAccess = FileAccess;
-
 
         this.#createStorageDirectories();
 
@@ -68,8 +66,8 @@ class FileManager {
         if (!Array.isArray(pathSegments) || pathSegments.length === 0) {
             throw new Error('Invalid pathSegments: must be a non-empty array of strings');
         }
-        const finalPath = await path.join(...pathSegments);
-        return finalPath;
+
+        return pathSegments;
     }
 
     async saveFile(fileBuffer, options) {
@@ -80,19 +78,19 @@ class FileManager {
         folderPath = await this.createPath(folderPath);
 
         const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
-        const fullFolderPath = path.join(baseDir, folderPath);
+        const fullFolderPath = path.join(baseDir, ...folderPath);
 
         await fs.mkdir(fullFolderPath, { recursive: true });
 
         const uniqueFileName = `${Date.now()}-${originalName}`;
-        const fullFilePath = path.join(baseDir, path.join(folderPath, uniqueFileName));
+        const fullFilePath = path.join(baseDir, ...folderPath, uniqueFileName);
 
         await transaction(async (session) => {
             const file = await this.File.create([{
                 uploader_id: uploaderId,
                 originalName,
                 hostName: uniqueFileName,
-                storagePath: folderPath,
+                storagePath: folderPath,  
                 mimeType,
                 size: fileBuffer.length,
                 isPrivate,
@@ -110,7 +108,6 @@ class FileManager {
             await fs.writeFile(fullFilePath, fileBuffer);
             return file;
         });
-
     }
 
     async deleteFile(fileId, userId, userIsAdmin = false) {
@@ -133,7 +130,7 @@ class FileManager {
         }
 
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
-        const fullFilePath = path.join(baseDir, file.storagePath, file.hostName);
+        const fullFilePath = path.join(baseDir, ...file.storagePath, file.hostName);
         await transaction(async (session) => {
             await this.File.deleteOne({ _id: fileId });
 
@@ -172,7 +169,7 @@ class FileManager {
             const fileIds = files.map(file => file._id);
             for (const file of files) {
                 const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
-                const fullFilePath = path.join(baseDir, file.storagePath, file.hostName);
+                const fullFilePath = path.join(baseDir, ...file.storagePath, file.hostName);
                 await fs.unlink(fullFilePath);
             }
 
@@ -185,12 +182,10 @@ class FileManager {
             });
 
             const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
-            await fs.rm(path.join(baseDir, folderPath), { recursive: true, force: true });
+            await fs.rm(path.join(baseDir, ...folderPath), { recursive: true, force: true });
 
         });
     }
-
-
 
     async folderFileList(folderPath, userId, isPrivate, userIsAdmin) {
         this.#checkInitialized();
@@ -198,7 +193,7 @@ class FileManager {
         folderPath = await this.createPath(folderPath);
 
         const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
-        const fullFolderPath = path.join(baseDir, folderPath);
+        const fullFolderPath = path.join(baseDir, ...folderPath);
 
         try {
             const folderExists = await fs.stat(fullFolderPath);
@@ -219,13 +214,11 @@ class FileManager {
             .filter(entry => entry.isDirectory())
             .map(folder => ({
                 name: folder.name,
-                type: 'folder',
-                fullPath: path.join(folderPath, folder.name)
+                type: 'folder'
             }));
 
         const result = [];
 
-        // Process files
         for (const file of files) {
             if (!file.isPrivate || userIsAdmin) {
                 result.push({ ...file.toObject(), type: 'file' });
@@ -257,9 +250,9 @@ class FileManager {
         folderPath = await this.createPath(folderPath);
 
         if (isPrivate) {
-            await fs.mkdir(path.join(this.privateBaseDir, folderPath), { recursive: true });
+            await fs.mkdir(path.join(this.privateBaseDir, ...folderPath), { recursive: true });
         } else {
-            await fs.mkdir(path.join(this.publicBaseDir, folderPath), { recursive: true });
+            await fs.mkdir(path.join(this.publicBaseDir, ...folderPath), { recursive: true });
         }
         return true;
     }
@@ -283,10 +276,9 @@ class FileManager {
         }
 
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
-        const oldPath = path.join(baseDir, file.storagePath);
+        const oldPath = path.join(baseDir, ...file.storagePath);
         const oldName = file.hostName;
         newName = `${Date.now()}-${newName}`;
-
 
         const result = transaction(async (session) => {
             file.hostName = newName;
@@ -320,7 +312,7 @@ class FileManager {
                 throw new Error('Access denied to private file');
             }
         }
-        return (baseDir + path.sep + file.storagePath + path.sep + file.hostName);
+        return (baseDir + path.sep + file.storagePath.join(path.sep) + path.sep + file.hostName);
     }
 
     async getRegexSafePath(inputPath) {
@@ -334,53 +326,50 @@ class FileManager {
 
     async renameFolder(oldFolderPath, newFolderPath, isPrivate = false, userId, userIsAdmin = false) {
         this.#checkInitialized();
-
+    
         oldFolderPath = await this.createPath(oldFolderPath);
         newFolderPath = await this.createPath(newFolderPath);
-
-
+    
         const baseDir = (isPrivate ? this.privateBaseDir : this.publicBaseDir);
-
-        const oldFolderFullPath = path.join(baseDir, oldFolderPath);
-        const newFolderFullPath = path.join(baseDir, newFolderPath);
-
-
-        const folderExists = await fs.stat(oldFolderFullPath);
-        if (!folderExists.isDirectory()) {
-            throw new Error('Old folder is not a directory');
-        }
-
-        const test = await this.getRegexSafePath("test1/test2");
+    
+        const oldFolderFullPath = path.join(baseDir, ...oldFolderPath);
+        const newFolderFullPath = path.join(baseDir, ...newFolderPath);
+    
         const files = await this.File.find({
-            storagePath: { $regex: `^${test}*`, $options: 'i' }
+            storagePath: { $in: oldFolderPath },
+            isPrivate
         });
-
-        if (!userIsAdmin) {
-            for (const file of files) {
-                if (file.isPrivate) {
-                    const access = await this.FileAccess.findOne({
-                        file_id: file._id,
-                        user_id: userId,
-                        accessLevel: 'write'
-                    });
-                    if (!access) {
-                        throw new Error('Access denied');
-                    }
+    
+        for (const file of files) {
+            if (file.isPrivate && !userIsAdmin) {
+                const access = await this.FileAccess.findOne({
+                    file_id: file._id,
+                    user_id: userId,
+                    accessLevel: 'write'
+                });
+                if (!access) {
+                    throw new Error('Access denied');
                 }
             }
+    
+            const newStoragePath = file.storagePath.map((pathSegment, index) => {
+                if (index === oldFolderPath.findIndex(folder => folder === pathSegment)) {
+                    return newFolderPath[oldFolderPath.findIndex(folder => folder === pathSegment)];
+                }
+                return pathSegment;
+            });
+    
+            file.storagePath = newStoragePath;
         }
+        await fs.rename(oldFolderFullPath, newFolderFullPath);
         await transaction(async (session) => {
             for (const file of files) {
-                const newStoragePath = file.storagePath.replace(oldFolderPath, newFolderPath);
-
-                await this.File.updateOne(
-                    { _id: file._id },
-                    { storagePath: newStoragePath }
-                );
+                await file.save();
             }
-            await fs.rename(oldFolderFullPath, newFolderFullPath);
         });
     }
+    
+
 }
 
 module.exports = FileManager;

@@ -5,7 +5,7 @@ const FileSchema = buildSchema({
     uploader_id: { type: mongoose.ObjectId, required: true, ref: 'User' },
     originalName: { type: String, required: true },
     hostName: { type: String, required: true },
-    storagePath: { type: String, required: true },
+    storagePath: { type: [String], required: true },
     mimeType: { type: String, required: true },
     size: { type: Number, required: true },
     isPrivate: { type: Boolean, required: true },

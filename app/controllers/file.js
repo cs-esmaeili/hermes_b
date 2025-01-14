@@ -121,7 +121,7 @@ exports.renameFolder = async (req, res, next) => {
         if (!newFolderPath) {
             return res.status(400).json({ message: 'newFolderPath is required' });
         }
-
+        
         const file = await fileManager.renameFolder(oldFolderPath, newFolderPath, isPrivate, userId, true);
 
         res.json({
