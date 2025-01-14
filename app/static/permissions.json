@@ -228,7 +228,11 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
-    "/file/rename": {
+    "/file/renameFile": {
+        "name": "Role List",
+        "disc": "This is Permission is need for get Roles "
+    },
+    "/file/renameFolder": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },

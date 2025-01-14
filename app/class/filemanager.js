@@ -87,7 +87,7 @@ class FileManager {
         const uniqueFileName = `${Date.now()}-${originalName}`;
         const fullFilePath = path.join(baseDir, path.join(folderPath, uniqueFileName));
 
-        transaction(async () => {
+        await transaction(async (session) => {
             const file = await this.File.create([{
                 uploader_id: uploaderId,
                 originalName,
@@ -96,7 +96,7 @@ class FileManager {
                 mimeType,
                 size: fileBuffer.length,
                 isPrivate,
-                metadata
+                metadata,
             }]);
             if (isPrivate) {
                 await this.FileAccess.create([{
@@ -108,7 +108,9 @@ class FileManager {
                 }]);
             }
             await fs.writeFile(fullFilePath, fileBuffer);
+            return file;
         });
+
     }
 
     async deleteFile(fileId, userId, userIsAdmin = false) {
@@ -132,14 +134,13 @@ class FileManager {
 
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
         const fullFilePath = path.join(baseDir, file.storagePath, file.hostName);
-
-        transaction(async () => {
+        await transaction(async (session) => {
             await this.File.deleteOne({ _id: fileId });
+
             if (file.isPrivate) {
                 await this.FileAccess.deleteOne({ file_id: fileId });
             }
             await fs.unlink(fullFilePath);
-            return true;
         });
     }
 
@@ -149,14 +150,9 @@ class FileManager {
         folderPath = await this.createPath(folderPath);
 
         const files = await this.File.find({
-            $expr: {
-                $eq: [
-                    { $substr: ['$storagePath', 0, folderPath.length] },
-                    folderPath
-                ]
-            },
+            storagePath: folderPath,
+            isPrivate,
         });
-
 
         for (const file of files) {
             if (file.isPrivate && !userIsAdmin) {
@@ -171,9 +167,9 @@ class FileManager {
             }
         }
 
-        await transaction(async () => {
-            const fileIds = files.map(file => file._id);
+        await transaction(async (session) => {
 
+            const fileIds = files.map(file => file._id);
             for (const file of files) {
                 const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
                 const fullFilePath = path.join(baseDir, file.storagePath, file.hostName);
@@ -190,6 +186,7 @@ class FileManager {
 
             const baseDir = isPrivate ? this.privateBaseDir : this.publicBaseDir;
             await fs.rm(path.join(baseDir, folderPath), { recursive: true, force: true });
+
         });
     }
 
@@ -291,12 +288,13 @@ class FileManager {
         newName = `${Date.now()}-${newName}`;
 
 
-        const result = transaction(async () => {
+        const result = transaction(async (session) => {
             file.hostName = newName;
             await file.save();
             await fs.rename(path.join(oldPath, oldName), path.join(oldPath, newName));
             return file;
         });
+
         return result;
     }
 
@@ -322,7 +320,66 @@ class FileManager {
                 throw new Error('Access denied to private file');
             }
         }
-        return (baseDir + path.sep + file.storagePath);
+        return (baseDir + path.sep + file.storagePath + path.sep + file.hostName);
+    }
+
+    async getRegexSafePath(inputPath) {
+        const normalizedPath = inputPath.replace(/\\/g, '/');
+        const regexSafePath = normalizedPath
+            .split('/')
+            .map(part => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join(`[\\\\${!path.sep === '\\' ? '\\\\' : '/'}]`);
+        return regexSafePath;
+    }
+
+    async renameFolder(oldFolderPath, newFolderPath, isPrivate = false, userId, userIsAdmin = false) {
+        this.#checkInitialized();
+
+        oldFolderPath = await this.createPath(oldFolderPath);
+        newFolderPath = await this.createPath(newFolderPath);
+
+
+        const baseDir = (isPrivate ? this.privateBaseDir : this.publicBaseDir);
+
+        const oldFolderFullPath = path.join(baseDir, oldFolderPath);
+        const newFolderFullPath = path.join(baseDir, newFolderPath);
+
+
+        const folderExists = await fs.stat(oldFolderFullPath);
+        if (!folderExists.isDirectory()) {
+            throw new Error('Old folder is not a directory');
+        }
+
+        const test = await this.getRegexSafePath("test1/test2");
+        const files = await this.File.find({
+            storagePath: { $regex: `^${test}*`, $options: 'i' }
+        });
+
+        if (!userIsAdmin) {
+            for (const file of files) {
+                if (file.isPrivate) {
+                    const access = await this.FileAccess.findOne({
+                        file_id: file._id,
+                        user_id: userId,
+                        accessLevel: 'write'
+                    });
+                    if (!access) {
+                        throw new Error('Access denied');
+                    }
+                }
+            }
+        }
+        await transaction(async (session) => {
+            for (const file of files) {
+                const newStoragePath = file.storagePath.replace(oldFolderPath, newFolderPath);
+
+                await this.File.updateOne(
+                    { _id: file._id },
+                    { storagePath: newStoragePath }
+                );
+            }
+            await fs.rename(oldFolderFullPath, newFolderFullPath);
+        });
     }
 }
 

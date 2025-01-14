@@ -94,7 +94,7 @@ exports.createFolder = async (req, res, next) => {
     }
 };
 
-exports.rename = async (req, res, next) => {
+exports.renameFile = async (req, res, next) => {
     try {
         const { file_id, newName } = req.body;
         const userId = req.user._id;
@@ -103,7 +103,26 @@ exports.rename = async (req, res, next) => {
             return res.status(400).json({ message: 'New name is required' });
         }
 
-        const file = await fileManager.rename(file_id, newName, userId, true);
+        const file = await fileManager.renameFile(file_id, newName, userId, true);
+
+        res.json({
+            message: 'File renamed successfully',
+            file
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+exports.renameFolder = async (req, res, next) => {
+    try {
+        const { oldFolderPath, newFolderPath, isPrivate = false } = req.body;
+        const userId = req.user._id;
+
+        if (!newFolderPath) {
+            return res.status(400).json({ message: 'newFolderPath is required' });
+        }
+
+        const file = await fileManager.renameFolder(oldFolderPath, newFolderPath, isPrivate, userId, true);
 
         res.json({
             message: 'File renamed successfully',
@@ -119,8 +138,10 @@ exports.downloadFile = async (req, res, next) => {
         const { file_id } = req.body;
         const userId = req.user._id;
         const file = await fileManager.getFileUrl(file_id, userId, true);
-        res.download(file)
+        res.download(file);
     } catch (error) {
+        console.log(error);
+        
         next(error);
     }
 }

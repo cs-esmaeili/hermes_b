@@ -8,20 +8,26 @@ exports.connect = async (app) => {
     await seed(app);
 }
 
-exports.transaction = async (querys) => {
+
+exports.transaction = async (queries) => {
     const session = await connection.startSession();
     try {
         session.startTransaction();
 
-        await querys();
+        // Pass the session to the query function
+        await queries(session);
 
+        // Commit the transaction
         await session.commitTransaction();
-        session.endSession();
         return true;
     } catch (error) {
         console.error('Error in transaction:', error);
+
+        // Abort the transaction on error
         await session.abortTransaction();
+        throw error; // Re-throw the error to allow the caller to handle it
+    } finally {
+        // Always end the session
         session.endSession();
-        return error;
     }
-}
+};
