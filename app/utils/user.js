@@ -43,12 +43,12 @@ exports.checkUserAccess = async (token, route) => {
     }
 
     const isAllowed = allPermissions.some((permission) => {
-        const regex = convertToRegex(permission.route); // تبدیل مسیر دیتابیس به Regex
-        return regex.test(route); // تطبیق مسیر ورودی
+        const regex = convertToRegex(permission.route);
+        return regex.test(route);
     });
 
     if (!isAllowed) {
-        throw { message: 'Access denied: Insufficient permissions', statusCode: 403 };
+        return false;
     }
 
     return true;

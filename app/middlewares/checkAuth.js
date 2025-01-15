@@ -21,7 +21,9 @@ exports.checkRoutePermission = async (req, res, next) => {
         req.token = bearerToken;
 
         const userCheck = await checkUserAccess(bearerToken, currentRoute);
-
+        if(!userCheck){
+            throw { message: 'Access denied: Insufficient permissions', statusCode: 403 };
+        }
         const token_id = (await getToken(bearerToken))._id;
 
         const refresh = await refreshTokenTime(token_id);

@@ -89,7 +89,7 @@ class FileManager {
                 uploader_id: uploaderId,
                 originalName,
                 hostName: uniqueFileName,
-                storagePath: folderPath,  
+                storagePath: folderPath,
                 mimeType,
                 size: fileBuffer.length,
                 isPrivate,
@@ -303,10 +303,10 @@ class FileManager {
         if (file.isPrivate && !userIsAdmin) {
             const access = await this.FileAccess.findOne({
                 file_id: fileId,
-                user_id: userId,
-                accessLevel: { $in: ['read', 'write'] }
+                accessList: {
+                    $elemMatch: { userId }
+                }
             });
-
             if (!access) {
                 throw new Error('Access denied to private file');
             }
@@ -325,20 +325,20 @@ class FileManager {
 
     async renameFolder(oldFolderPath, newFolderPath, isPrivate = false, userId, userIsAdmin = false) {
         this.#checkInitialized();
-    
+
         oldFolderPath = await this.createPath(oldFolderPath);
         newFolderPath = await this.createPath(newFolderPath);
-    
+
         const baseDir = (isPrivate ? this.privateBaseDir : this.publicBaseDir);
-    
+
         const oldFolderFullPath = path.join(baseDir, ...oldFolderPath);
         const newFolderFullPath = path.join(baseDir, ...newFolderPath);
-    
+
         const files = await this.File.find({
             storagePath: { $in: oldFolderPath },
             isPrivate
         });
-    
+
         for (const file of files) {
             if (file.isPrivate && !userIsAdmin) {
                 const access = await this.FileAccess.findOne({
@@ -350,14 +350,14 @@ class FileManager {
                     throw new Error('Access denied');
                 }
             }
-    
+
             const newStoragePath = file.storagePath.map((pathSegment, index) => {
                 if (index === oldFolderPath.findIndex(folder => folder === pathSegment)) {
                     return newFolderPath[oldFolderPath.findIndex(folder => folder === pathSegment)];
                 }
                 return pathSegment;
             });
-    
+
             file.storagePath = newStoragePath;
         }
         await fs.rename(oldFolderFullPath, newFolderFullPath);
@@ -367,7 +367,7 @@ class FileManager {
             }
         });
     }
-    
+
 
 }
 

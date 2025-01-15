@@ -1,5 +1,5 @@
 const { buildSchema } = require("./builder");
-const { createToken } = require("../../utils/token");
+const { createToken, createHash } = require("../../utils/token");
 const bcrypt = require('bcryptjs');
 const Role = require("./Role");
 const mongoose = require("mongoose");
@@ -108,7 +108,7 @@ schema.statics.createNormalUser = async function (userName = null, email = null,
     }
 
     if (password) {
-        userData.password = await bcrypt.hash(password, 10);
+        userData.password = await createHash(password);
     }
 
     const newUser = await this.create(userData);

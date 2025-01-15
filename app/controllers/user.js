@@ -14,6 +14,9 @@ exports.securityCheck = async (req, res, next) => {
     try {
         const { route } = await req.body;
         const check = await checkUserAccess(req.token, route);
+        if(!check){
+            throw { message: 'Access denied: Insufficient permissions', statusCode: 403 };
+        }
         const { permissions, information } = await this.userInformation(req.user._id);
 
         res.json({

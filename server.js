@@ -4,6 +4,7 @@ var cors = require('cors');
 const express = require("express");
 const { connect } = require('./app/database');
 const category = require("./app/routes/category");
+const { downloadFile } = require("./app/controllers/file");
 const file = require("./app/routes/file");
 const post = require("./app/routes/post");
 const role = require("./app/routes/role");
@@ -69,6 +70,7 @@ const fileManager = require('./app/class/filemanager');
 
   //* Routes
   app.use("/auth", auth);
+  app.get('/file/:file_id/:token', downloadFile);
   app.use(checkRoutePermission);
   app.use("/file", file);
   app.use("/user", user);

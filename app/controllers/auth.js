@@ -3,6 +3,7 @@ const User = require("../database/models/User");
 const VerifyCode = require("../database/models/VerifyCode");
 const { SendVerifyCodeSms } = require("../utils/sms");
 const { checkDelayTime } = require("../utils/checkTime");
+const { createHash } = require("../utils/token");
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
 
@@ -99,7 +100,7 @@ exports.resetPasswordStepTwo = async (req, res, next) => {
         }
 
         const { _id, token } = await createToken(userName, user.token_id);
-        const hashPassword = await bcrypt.hash(password, 10);
+        const hashPassword = await createHash(password);
         const userUpdate = await User.updateOne({ _id: user._id }, { token_id: _id, password: hashPassword });
         const verifyCodeDelete = await VerifyCode.deleteOne({ user_id: user._id }).lean();
         res.json({
@@ -274,12 +275,12 @@ exports.firstLogInWithGoogleStepTwo = async (req, res, next) => {
 
         let finalToken = null;
         if (!user) {
-            const hashPassword = await bcrypt.hash(password, 10);
+            const hashPassword = await createHash(password);
             const { newUser, newToken } = await User.createNormalUser(userName, email, hashPassword);
             user = newUser;
             finalToken = newToken;
         } else {
-            const hashPassword = await bcrypt.hash(password, 10);
+            const hashPassword = await createHash(password);
             await User.updateOne({ _id: user._id }, { password: hashPassword, userName, email });
             finalToken = (await Token.findOne({ _id: user.token_id })).token;
         }

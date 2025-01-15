@@ -2,16 +2,20 @@ const VerifyCode = require('../database/models/VerifyCode');
 const { checkDelayTime } = require('./checkTime');
 const { currentTime } = require('../utils/TimeConverter');
 const Token = require('../database/models/Token');
-const { mCreateVerifyCode } = require('../static/response.json');
 const bcrypt = require('bcryptjs');
 
+exports.createHash = async (unicData) => {
+    const hash = await bcrypt.hash(unicData, 10);
+    const urlSafeHash = hash.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return urlSafeHash;
+}
 exports.createToken = async (unicData, token_id = null) => {
     try {
         let hash = null;
         if (process.env.ONLOCAL === "true") {
-            hash = "$2a$10$UPEKcg8Lu/EFfwueQVCv1eUZRYuBTcjbQ0N1UvYLGiuxr7O/Td68q";
-        }else{
-            hash = await bcrypt.hash(unicData, 10);
+            hash = "$2a$10$Ua2LtSoxFUmMpHqbBAboR.KPT_yBHCGztaxdBXjFju1MtgzN2Fv6.";
+        } else {
+            hash = await this.createHash(unicData);
         }
         let result = await Token.find({ _id: token_id });
         if (result.length > 0) {
@@ -85,13 +89,13 @@ exports.createVerifyCode = async (user_id, userName, email) => {
             throw { message: 'ارسال کد جدید در این زمان مقدور نیست', statusCode: 404 };
         }
         const randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000 + "";
-        const hashRandomNumber = await bcrypt.hash(randomNumber, 10);
+        const hashRandomNumber = await this.createHash(randomNumber);
 
         const result = await VerifyCode.updateOne({ user_id }, { code: hashRandomNumber }, { timestamps: true });
         return { result, code: randomNumber };
     } else {
         const randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000 + "";
-        const hashRandomNumber = await bcrypt.hash(randomNumber, 10);
+        const hashRandomNumber = await this.createHash(randomNumber);
 
 
         let verifycodeCreation = { code: hashRandomNumber };

@@ -247,10 +247,6 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
-    "/file/:file_id": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
     "/user/userInformation": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
