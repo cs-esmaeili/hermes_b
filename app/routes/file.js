@@ -19,7 +19,7 @@ router.post('/renameFolder', fileController.renameFolder);
 router.post('/createFolder', fileController.createFolder);
 router.post('/deleteFolder', fileController.deleteFolder);
 router.post('/listFiles', fileController.listFiles);
-router.post('/downloadFile', fileController.downloadFile);
+router.get('/:file_id', fileController.downloadFile);
 
 
 module.exports = router;

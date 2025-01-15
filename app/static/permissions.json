@@ -219,7 +219,6 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
-
     "/file/uploadFile": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
@@ -248,11 +247,10 @@
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
-    "/file/downloadFile": {
+    "/file/:file_id": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },
-
     "/user/userInformation": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "

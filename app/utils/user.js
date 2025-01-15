@@ -25,7 +25,6 @@ exports.getUserFromToken = async (token) => {
 }
 
 exports.checkUserAccess = async (token, route) => {
-
     if (passRoutes.includes(route)) {
         return true;
     }
@@ -33,12 +32,24 @@ exports.checkUserAccess = async (token, route) => {
     const checkToken = await verifyToken(token);
     const user = await this.getUserFromToken(token);
 
-    const permissions = (await Role.findOne({ _id: user.role_id })).permissions;
-    const permission = await Permission.find({ _id: { $in: permissions }, route });
 
-    if (permission.length === 0) {
+    const permissions = (await Role.findOne({ _id: user.role_id })).permissions;
+
+    const allPermissions = await Permission.find({ _id: { $in: permissions } });
+
+    
+    function convertToRegex(dbRoute) {
+        return new RegExp(`^${dbRoute.replace(/:[^\s/]+/g, '[^/]+')}$`);
+    }
+
+    const isAllowed = allPermissions.some((permission) => {
+        const regex = convertToRegex(permission.route); // تبدیل مسیر دیتابیس به Regex
+        return regex.test(route); // تطبیق مسیر ورودی
+    });
+
+    if (!isAllowed) {
         throw { message: 'Access denied: Insufficient permissions', statusCode: 403 };
     }
 
     return true;
-}
+};

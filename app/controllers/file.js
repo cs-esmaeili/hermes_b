@@ -119,7 +119,7 @@ exports.renameFolder = async (req, res, next) => {
         if (!newFolderPath) {
             return res.status(400).json({ message: 'newFolderPath is required' });
         }
-        
+
         const file = await fileManager.renameFolder(oldFolderPath, newFolderPath, isPrivate, userId, true);
 
         res.json({
@@ -133,13 +133,13 @@ exports.renameFolder = async (req, res, next) => {
 
 exports.downloadFile = async (req, res, next) => {
     try {
-        const { file_id } = req.body;
-        const userId = req.user._id;
+        const { file_id } = req.params;
+        const userId ="";
         const file = await fileManager.getFileUrl(file_id, userId, true);
-        res.download(file);
+        res.sendFile(file);
     } catch (error) {
         console.log(error);
-        
+
         next(error);
     }
 }

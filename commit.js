@@ -78,8 +78,6 @@ const main = async () => {
     // Output the generated commit message
     console.log('\nGenerated Commit Message:');
     console.log(commitMessage);
-
-    console.log('\nThe commit message has been saved to commit_message.txt');
   } catch (error) {
     console.error('Error generating commit message:', error);
   }
