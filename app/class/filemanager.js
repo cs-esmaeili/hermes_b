@@ -53,6 +53,24 @@ class FileManager {
         }
     }
 
+    async checkFileAccess(user_id, file_id, accessLevel) {
+        let query = { userId: user_id };
+        if (accessLevel) {
+            query.accessLevel = accessLevel;
+        }
+        const access = await this.FileAccess.findOne({
+            file_id,
+            accessList: {
+                $elemMatch: query
+            }
+        });
+
+        if (!access) {
+            throw new Error('Access denied to private file');
+        }
+        return true;
+    }
+
     async createPath(pathSegments) {
         if (typeof pathSegments == "string") {
             pathSegments = JSON.parse(pathSegments);
@@ -96,13 +114,7 @@ class FileManager {
                 metadata,
             }]);
             if (isPrivate) {
-                await this.FileAccess.create([{
-                    file_id: file[0]._id,
-                    accessList: [{
-                        userId: uploaderId,
-                        accessLevel: 'write'
-                    }]
-                }]);
+                await this.checkFileAccess(uploaderId, file[0]._id, 'write');
             }
             await fs.writeFile(fullFilePath, fileBuffer);
             return file;
@@ -118,14 +130,7 @@ class FileManager {
         }
 
         if (file.isPrivate && !userIsAdmin) {
-            const access = await this.FileAccess.findOne({
-                file_id: fileId,
-                user_id: userId,
-                accessLevel: 'write'
-            });
-            if (!access) {
-                throw new Error('Access denied');
-            }
+            await this.checkFileAccess(userId, fileId, 'write');
         }
 
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
@@ -152,14 +157,7 @@ class FileManager {
 
         for (const file of files) {
             if (file.isPrivate && !userIsAdmin) {
-                const access = await this.FileAccess.findOne({
-                    file_id: file._id,
-                    user_id: userId,
-                    accessLevel: 'write'
-                });
-                if (!access) {
-                    throw new Error('Access denied');
-                }
+                await this.checkFileAccess(userId, file._id, 'write');
             }
         }
 
@@ -222,12 +220,7 @@ class FileManager {
             if (!file.isPrivate || userIsAdmin) {
                 result.push({ ...file.toObject(), type: 'file' });
             } else {
-                const access = await this.FileAccess.findOne({
-                    file_id: file._id,
-                    user_id: userId,
-                    accessLevel: 'read'
-                });
-
+                await this.checkFileAccess(userId, file._id, 'read');
                 if (access) {
                     result.push({
                         ...file.toObject(),
@@ -264,14 +257,7 @@ class FileManager {
             throw new Error('File not found');
         }
         if (file.isPrivate && !userIsAdmin) {
-            const access = await this.FileAccess.findOne({
-                file_id: fileId,
-                user_id: userId,
-                accessLevel: 'write'
-            });
-            if (!access) {
-                throw new Error('Access denied');
-            }
+            await this.checkFileAccess(userId, fileId, 'write');
         }
 
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
@@ -301,16 +287,9 @@ class FileManager {
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
 
         if (file.isPrivate && !userIsAdmin) {
-            const access = await this.FileAccess.findOne({
-                file_id: fileId,
-                accessList: {
-                    $elemMatch: { userId }
-                }
-            });
-            if (!access) {
-                throw new Error('Access denied to private file');
-            }
+            await this.checkFileAccess(userId, fileId);
         }
+
         return (baseDir + path.sep + file.storagePath.join(path.sep) + path.sep + file.hostName);
     }
 
@@ -341,14 +320,7 @@ class FileManager {
 
         for (const file of files) {
             if (file.isPrivate && !userIsAdmin) {
-                const access = await this.FileAccess.findOne({
-                    file_id: file._id,
-                    user_id: userId,
-                    accessLevel: 'write'
-                });
-                if (!access) {
-                    throw new Error('Access denied');
-                }
+                await this.checkFileAccess(userId, file._id, 'write');
             }
 
             const newStoragePath = file.storagePath.map((pathSegment, index) => {
