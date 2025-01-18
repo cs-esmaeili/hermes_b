@@ -113,9 +113,6 @@ class FileManager {
                 isPrivate,
                 metadata,
             }]);
-            if (isPrivate) {
-                await this.checkFileAccess(uploaderId, file[0]._id, 'write');
-            }
             await fs.writeFile(fullFilePath, fileBuffer);
             return file;
         });

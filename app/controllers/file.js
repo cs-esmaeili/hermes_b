@@ -1,8 +1,6 @@
 const { error } = require('console');
 const FileManager = require('../class/filemanager');
-const User = require('../database/models/User');
 const { checkUserAccess, getUserFromToken } = require("../utils/user")
-const path = require('path');
 
 const fileManager = FileManager.getInstance();
 

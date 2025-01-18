@@ -6,14 +6,19 @@ const bcrypt = require('bcryptjs');
 
 exports.createHash = async (unicData) => {
     const hash = await bcrypt.hash(unicData, 10);
-    const urlSafeHash = hash.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const urlSafeHash = hash
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+        .replace(/\./g, ''); // Remove dots
     return urlSafeHash;
-}
+};
+
 exports.createToken = async (unicData, token_id = null) => {
     try {
         let hash = null;
         if (process.env.ONLOCAL === "true") {
-            hash = "$2a$10$Ua2LtSoxFUmMpHqbBAboR.KPT_yBHCGztaxdBXjFju1MtgzN2Fv6.";
+            hash = "$2a$10$Ua2LtSoxFUmMpHqbBAboR.KPT_yBHCGztaxdBXjFju1MtgzN2Fv6";
         } else {
             hash = await this.createHash(unicData);
         }
