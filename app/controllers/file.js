@@ -77,13 +77,13 @@ exports.listFiles = async (req, res, next) => {
 
 exports.createFolder = async (req, res, next) => {
     try {
-        const { folderPath, isPrivate } = req.body;
+        const { folderName, folderPath, isPrivate } = req.body;
 
         if (!folderPath) {
             return res.status(400).json({ message: 'Folder path is required' });
         }
 
-        await fileManager.createFolder(folderPath, isPrivate);
+        await fileManager.createFolder(folderName, folderPath, isPrivate);
 
         res.status(201).json({
             message: 'Folder created successfully'

@@ -233,15 +233,15 @@ class FileManager {
         return [...folders, ...result];
     }
 
-    async createFolder(folderPath, isPrivate = false) {
+    async createFolder(folderName, folderPath, isPrivate = false) {
         this.#checkInitialized();
 
         folderPath = await this.createPath(folderPath);
 
         if (isPrivate) {
-            await fs.mkdir(path.join(this.privateBaseDir, ...folderPath), { recursive: true });
+            await fs.mkdir(path.join(this.privateBaseDir, ...folderPath, folderName), { recursive: true });
         } else {
-            await fs.mkdir(path.join(this.publicBaseDir, ...folderPath), { recursive: true });
+            await fs.mkdir(path.join(this.publicBaseDir, ...folderPath, folderName), { recursive: true });
         }
         return true;
     }
