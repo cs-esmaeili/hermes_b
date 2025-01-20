@@ -143,7 +143,7 @@ exports.downloadFile = async (req, res, next) => {
             res.sendFile(file);
         } else {
             //public
-            const file = await fileManager.getFileUrl(file_id, user_id, false);
+            const file = await fileManager.getFileUrl(file_id, null, false);
             res.sendFile(file);
         }
     } catch (error) {

@@ -3,6 +3,7 @@ const path = require('path');
 const { transaction } = require('../database');
 const File = require('../database/models/File');
 const FileAccess = require('../database/models/FileAccess');
+const { encodeFile } = require('../class/encodeVideo')
 
 class FileManager {
     constructor() {
@@ -283,8 +284,11 @@ class FileManager {
 
         const baseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
 
+
         if (file.isPrivate && !userIsAdmin) {
             await this.checkFileAccess(userId, fileId);
+            const codedFilePath = await encodeFile(baseDir + file.storagePath.join(path.sep) + path.sep + file.hostName, baseDir + path.sep + 'temp', file._id, userId);
+            return codedFilePath;
         }
 
         return (baseDir + path.sep + file.storagePath.join(path.sep) + path.sep + file.hostName);
