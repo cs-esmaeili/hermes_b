@@ -1,5 +1,6 @@
 [
     "/auth/createOrLoginWithPassword",
     "/auth/logInPhoneStepOne",
-    "/auth/logInPhoneStepTwo"
+    "/auth/logInPhoneStepTwo",
+    "/favicon.ico"
 ]

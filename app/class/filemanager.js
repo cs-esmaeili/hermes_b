@@ -4,6 +4,7 @@ const { transaction } = require('../database');
 const File = require('../database/models/File');
 const FileAccess = require('../database/models/FileAccess');
 const { encodeFile } = require('../class/encodeVideo')
+const { getBase64 } = require('@plaiceholder/base64');
 
 class FileManager {
     constructor() {
@@ -103,20 +104,18 @@ class FileManager {
         const uniqueFileName = `${Date.now()}-${originalName}`;
         const fullFilePath = path.join(baseDir, ...folderPath, uniqueFileName);
 
-        await transaction(async (session) => {
-            const file = await this.File.create([{
-                uploader_id: uploaderId,
-                originalName,
-                hostName: uniqueFileName,
-                storagePath: folderPath,
-                mimeType,
-                size: fileBuffer.length,
-                isPrivate,
-                metadata,
-            }]);
-            await fs.writeFile(fullFilePath, fileBuffer);
-            return file;
-        });
+        const file = await this.File.create([{
+            uploader_id: uploaderId,
+            originalName,
+            hostName: uniqueFileName,
+            storagePath: folderPath,
+            mimeType,
+            size: fileBuffer.length,
+            isPrivate,
+            metadata,
+        }]);
+        await fs.writeFile(fullFilePath, fileBuffer);
+        return file;
     }
 
     async deleteFile(fileId, userId, userIsAdmin = false) {
@@ -273,7 +272,21 @@ class FileManager {
         return result;
     }
 
-    async getFileUrl(fileId, userId, userIsAdmin = false) {
+    async getPublicFileUrl(fileId) {
+        this.#checkInitialized();
+
+        const file = await this.File.findById(fileId);
+
+        if (!file) {
+            throw new Error('File not found');
+        }
+
+        const url = process.env.BASE_URL + "storage" + file.storagePath.join(path.sep) + path.sep + file.hostName;
+        const formattedUrl = url.replace(/\\/g, '/');
+        return formattedUrl;
+    }
+
+    async getFilePath(fileId, userId, userIsAdmin = false) {
         this.#checkInitialized();
 
         const file = await this.File.findById(fileId);

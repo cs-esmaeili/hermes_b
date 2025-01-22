@@ -139,11 +139,11 @@ exports.downloadFile = async (req, res, next) => {
         if (token) {
             const check = await checkUserAccess(token, "/file/listFiles");
             const user = await getUserFromToken(token);
-            const file = await fileManager.getFileUrl(file_id, user._id, check);
+            const file = await fileManager.getFilePath(file_id, user._id, check);
             res.sendFile(file);
         } else {
             //public
-            const file = await fileManager.getFileUrl(file_id, null, false);
+            const file = await fileManager.getFilePath(file_id, null, false);
             res.sendFile(file);
         }
     } catch (error) {

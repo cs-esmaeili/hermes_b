@@ -1,26 +1,23 @@
-const User = require("../database/models/User");
-const Role = require("../database/models/Role");
-const Box = require("../database/models/Box");
-const Factor = require("../database/models/Factor");
-const { convertPersianNumberToEnglish, updateProductCount } = require("../utils/general");
+const { mSearchUser } = require('../static/response.json');
+const { getBase64 } = require('@plaiceholder/base64');
 const { checkUserAccess } = require("../utils/user");
-const { transaction } = require('../database');
-
-const { mlogInStepOne, registerPure, updateRegisterPure, mSearchUser, mBuyProducts, mSellProducts } = require('../static/response.json');
-
-
+const FileManager = require('../class/filemanager');
+const User = require("../database/models/User");
+const fileManager = FileManager.getInstance();
 
 exports.securityCheck = async (req, res, next) => {
     try {
         const { route } = await req.body;
         const check = await checkUserAccess(req.token, route);
-        if(!check){
+        if (!check) {
             throw { message: 'Access denied: Insufficient permissions', statusCode: 403 };
         }
-        const { permissions, information } = await this.userInformation(req.user._id);
+
+        const permissions = await User.userPermissions(req.user._id);
+        const user = await User.findOne({ _id: req.user._id }).populate('role_id', '-permissions').lean();
 
         res.json({
-            information,
+            information: user,
             permissions,
         });
     } catch (err) {
@@ -30,39 +27,20 @@ exports.securityCheck = async (req, res, next) => {
 }
 
 
-exports.userInformation = async (user_id) => {
+exports.userInformation = async (req, res, next) => {
     try {
+        let { user_id } = req.body;
+        if (!user_id || user_id == "") {
+            user_id = req.user._id;
+        }
         const permissions = await User.userPermissions(user_id);
         const user = await User.findOne({ _id: user_id }).populate('role_id', '-permissions').lean();
-        return {
+        res.send({
             permissions,
             information: user
-        };
-
+        });
     } catch (err) {
         console.log(err);
-    }
-}
-
-exports.registerPure = async (req, res, next) => {
-    try {
-        const { userName, role_id, data } = await req.body;
-        let user = await User.findOne({ userName });
-        if (user) {
-            throw { message: registerPure.fail_1, statusCode: 422 };
-        }
-        let role = await Role.findOne({ _id: role_id });
-        if (!role) {
-            throw { message: registerPure.fail_2, statusCode: 422 };
-        }
-        await User.create({
-            userName,
-            role_id,
-            data
-        });
-        res.json({ message: registerPure.ok });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
     }
 }
 
@@ -77,226 +55,97 @@ exports.userList = async (req, res, next) => {
     }
 }
 
-exports.updateRegisterPure = async (req, res, next) => {
+exports.changeAvatar = async (req, res, next) => {
     try {
-        const { user_id, userName, role_id, data } = await req.body;
-        let user = await User.findOne({ _id: user_id });
-        if (!user) {
-            throw { message: updateRegisterPure.fail_1, statusCode: 422 };
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file provided' });
         }
-        let newUserName = await User.findOne({ userName, _id: { $ne: user_id } });
-        if (newUserName) {
-            throw { message: updateRegisterPure.fail_2, statusCode: 422 };
-        }
-        let role = await Role.findOne({ _id: role_id });
-        if (!role) {
-            throw { message: updateRegisterPure.fail_3, statusCode: 422 };
-        }
-        await User.updateOne({ _id: user_id }, {
-            userName,
-            role_id,
-            data
+        const file = await fileManager.saveFile(req.file.buffer, {
+            uploaderId: req.user._id,
+            originalName: req.file.originalname,
+            mimeType: req.file.mimetype,
+            isPrivate: false,
+            folderPath: JSON.stringify(["", "users", req.user._id]),
         });
-        res.json({ message: updateRegisterPure.ok });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
-    }
-}
 
-exports.searchUser = async (req, res, next) => {
+
+        const fileUrl = await fileManager.getPublicFileUrl(file[0]._id);
+        const filePath = await fileManager.getFilePath(file[0]._id, req.user._id, false);
+        const blurHash = await getBase64(filePath);
+
+        const user = await User.updateOne(
+            { _id: req.user._id },
+            {
+                $set: {
+                    'data.image': {
+                        url: fileUrl,
+                        blurHash
+                    }
+                }
+            }
+        );
+
+        res.status(201).json({
+            message: 'File uploaded successfully',
+            file
+        });
+
+    } catch (error) {
+        console.log("Error in Change Avatar : " + error);
+    }
+};
+
+
+exports.updateUserData = async (req, res, next) => {
     try {
-        const { phoneNumber = "", name = "" } = await req.body;
-        const orConditions = [{ "userName": phoneNumber }];
 
-        if (name) {
-            orConditions.push(
-                { "data.fullName": name },
-                { "data.fullName": { $regex: `.*${name}.*`, $options: "i" } }
-            );
+        const { address, fullName, nationalCode, birthday, shebaNumber, cardNumber
+            , fatherName, companyName, economicCode, registrationNumber, postalCode
+            , ostan, shahr, github, linkedin, telegram, instagram, twitter, biography
+        } = req.body;
+
+        const user = await User.updateOne(
+            { _id: req.user._id },
+            {
+                $set: {
+                    'data.address': address,
+                    'data.fullName': fullName,
+                    'data.nationalCode': nationalCode,
+                    'data.birthday': birthday,
+                    'data.shebaNumber': shebaNumber,
+                    'data.cardNumber': cardNumber,
+                    'data.fatherName': fatherName,
+                    'data.companyName': companyName,
+                    'data.economicCode': economicCode,
+                    'data.registrationNumber': registrationNumber,
+                    'data.postalCode': postalCode,
+                    'data.ostan': ostan,
+                    'data.shahr': shahr,
+                    'data.biography': biography,
+                    'data.github': github,
+                    'data.linkedin': linkedin,
+                    'data.telegram': telegram,
+                    'data.instagram': instagram,
+                    'data.twitter': twitter,
+                }
+            }
+        );
+
+        if (!user.acknowledged) {
+            throw { message: 'User update failed', statusCode: 400 }
         }
 
-        const result = await User.find({
-            $or: orConditions
+        res.status(201).json({
+            message: 'User data update successfully',
+            user
         });
 
-        if (result.length <= 0) {
-            throw { message: mSearchUser.fail, statusCode: 422 };
-        }
-        res.send(result);
-    } catch (err) {
-        res.status(422).json({ message: mSearchUser.fail });
+    } catch (error) {
+        console.log("Error in User data update : " + error);
     }
-}
+};
 
 
-exports.buyProducts = async (req, res, next) => {
-
-    const result = await transaction(async () => {
-        const { user_id, time, cardPrice, selectedProducts, delivered } = req.body;
-
-        const transformedProducts = selectedProducts.map(product => {
-            return {
-                product_id: product._id,
-                price: product.price,
-                count: product.count
-            };
-        });
-
-        await Factor.create({
-            title: "خرید",
-            disc: "خرید طلا",
-            type: 1,
-            user_id,
-            price: cardPrice,
-            products: transformedProducts,
-            targetTime: convertPersianNumberToEnglish(time),
-        });
-
-        if (delivered) {
-            return true;
-        }
-
-        const transformedProductsR = selectedProducts.map(product => {
-            return {
-                product_id: product._id,
-                count: product.count
-            };
-        });
-
-        const haveBox = await Box.findOne({ user_id });
-
-        if (haveBox) {
-            let prevBoxProducts = haveBox.products;
-
-            const mergedArray = updateProductCount(prevBoxProducts, transformedProductsR, true);
-
-            await Box.updateOne({ user_id }, { user_id, products: mergedArray });
-        } else {
-            await Box.create({ user_id, products: transformedProductsR });
-        }
-
-        return true;
-    });
 
 
-    if (result === true) {
-        res.send({ message: mBuyProducts.ok });
-    } else {
-        res.status(result.statusCode || 422).json({ message: mBuyProducts.fail });
-    }
-}
-
-exports.sellProducts = async (req, res, next) => {
-
-    const result = await transaction(async () => {
-
-        const { user_id, time, cardPrice, selectedProducts } = req.body;
-
-        const transformedProducts = selectedProducts.map(product => {
-            return {
-                product_id: product._id,
-                price: product.price,
-                count: product.count
-            };
-        });
-
-        await Factor.create({
-            title: "فروش",
-            disc: "فروش طلا",
-            type: 2,
-            user_id,
-            price: cardPrice,
-            products: transformedProducts,
-            targetTime: convertPersianNumberToEnglish(time),
-        });
-
-        return true;
-    });
-
-    console.log(result);
-
-    if (result === true) {
-        res.send({ message: mSellProducts.ok });
-    } else {
-        res.status(result.statusCode || 422).json({ message: mSellProducts.fail });
-    }
-}
-
-
-exports.boxProducts = async (req, res, next) => {
-    try {
-        const { user_id } = await req.body;
-
-        const result = await Box.findOne({ user_id }).populate("products.product_id");
-
-        if (result == null || !result.products) {
-            throw { message: mlogInStepOne.fail_1, statusCode: 422 };
-        } else {
-            res.send(result.products);
-        }
-    } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
-    }
-}
-
-
-exports.sellBoxProducts = async (req, res, next) => {
-
-    const result = await transaction(async () => {
-
-        const { user_id, time, cardPrice, selectedProducts } = req.body;
-
-        const transformedProducts = selectedProducts.map(product => {
-            return {
-                product_id: product._id,
-                price: product.price,
-                count: product.count
-            };
-        });
-
-        await Factor.create({
-            title: "فروش",
-            disc: "فروش طلا از صندوق",
-            type: 3,
-            user_id,
-            price: cardPrice,
-            products: transformedProducts,
-            targetTime: convertPersianNumberToEnglish(time),
-        });
-
-
-        const productsToReducFromBox = selectedProducts.map(product => {
-            return {
-                product_id: product._id,
-                count: product.count
-            };
-        });
-
-        const haveBox = await Box.findOne({ user_id });
-
-        if (!haveBox) return false;
-
-        let boxProducts = haveBox.products;
-
-
-        const products = updateProductCount(boxProducts, productsToReducFromBox);
-
-        if (products == null || products.length == 0) {
-            await Box.deleteOne({ user_id });
-        } else {
-            await Box.updateOne({ user_id }, { user_id, products });
-        }
-
-
-        return true;
-    });
-
-
-    if (result === true) {
-        res.send({ message: mSellProducts.ok });
-    } else {
-        res.status(result.statusCode || 422).json({ message: mSellProducts.fail });
-    }
-}
 

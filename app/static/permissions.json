@@ -131,35 +131,15 @@
         "name": "Dashborad Page",
         "disc": "This is Permission is need for see Dashborad Page "
     },
-    "/user/registerPure": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
-    "/user/updateRegisterPure": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
-    "/user/boxProducts": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
-    "/user/sellBoxProducts": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
-    "/user/sellProducts": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
-    "/user/buyProducts": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
-    "/user/searchUser": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
-    },
     "/user/userList": {
+        "name": "Role List",
+        "disc": "This is Permission is need for get Roles "
+    },
+    "/user/changeAvatar": {
+        "name": "Role List",
+        "disc": "This is Permission is need for get Roles "
+    },
+    "/user/updateUserData": {
         "name": "Role List",
         "disc": "This is Permission is need for get Roles "
     },

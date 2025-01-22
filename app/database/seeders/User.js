@@ -19,10 +19,10 @@ const seed = async (app) => {
         email: "cs.esmaeili@gmail.com",
         data: {
             fullName: "جواد اسماعیلی",
-            image: {
-                blurHash,
-                url: process.env.BASE_URL + JSON.parse(process.env.STORAGE_LOCATION)[2] + "/1.jpg",
-            },
+            // image: {
+            //     blurHash,
+            //     url: process.env.BASE_URL + JSON.parse(process.env.STORAGE_LOCATION)[2] + "/1.jpg",
+            // },
 
         }
     });
