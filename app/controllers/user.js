@@ -5,6 +5,7 @@ const FileManager = require('../class/filemanager');
 const User = require("../database/models/User");
 const { log } = require('node:console');
 const fileManager = FileManager.getInstance();
+const { createHash } = require("../utils/token");
 
 exports.securityCheck = async (req, res, next) => {
     try {
@@ -113,41 +114,47 @@ exports.updateUserData = async (req, res, next) => {
             , ostan, shahr, github, linkedin, telegram, instagram, twitter, biography
         } = req.body;
 
-        let { user_id, role_id } = req.body;
+        let { user_id, role_id, email, password, userName } = req.body;
 
-        console.log(role_id);
 
         if (!user_id || user_id == "") {
             user_id = req.user._id;
         }
+        const updateData = {
+            'data.address': address,
+            'data.fullName': fullName,
+            'data.nationalCode': nationalCode,
+            'data.birthday': birthday,
+            'data.shebaNumber': shebaNumber,
+            'data.cardNumber': cardNumber,
+            'data.fatherName': fatherName,
+            'data.companyName': companyName,
+            'data.economicCode': economicCode,
+            'data.registrationNumber': registrationNumber,
+            'data.postalCode': postalCode,
+            'data.ostan': ostan,
+            'data.shahr': shahr,
+            'data.biography': biography,
+            'data.github': github,
+            'data.linkedin': linkedin,
+            'data.telegram': telegram,
+            'data.instagram': instagram,
+            'data.twitter': twitter,
+            'role_id': role_id,
+            'email': email,
+            'userName': userName
+        };
+
+        if (password) {
+            const hashPassword = await createHash(password);
+            updateData['password'] = hashPassword;
+        }
 
         const user = await User.updateOne(
             { _id: user_id },
-            {
-                $set: {
-                    'data.address': address,
-                    'data.fullName': fullName,
-                    'data.nationalCode': nationalCode,
-                    'data.birthday': birthday,
-                    'data.shebaNumber': shebaNumber,
-                    'data.cardNumber': cardNumber,
-                    'data.fatherName': fatherName,
-                    'data.companyName': companyName,
-                    'data.economicCode': economicCode,
-                    'data.registrationNumber': registrationNumber,
-                    'data.postalCode': postalCode,
-                    'data.ostan': ostan,
-                    'data.shahr': shahr,
-                    'data.biography': biography,
-                    'data.github': github,
-                    'data.linkedin': linkedin,
-                    'data.telegram': telegram,
-                    'data.instagram': instagram,
-                    'data.twitter': twitter,
-                    'role_id':  role_id,
-                }
-            }
+            { $set: updateData }
         );
+
 
         if (!user.acknowledged) {
             throw { message: 'User update failed', statusCode: 400 }
@@ -163,6 +170,68 @@ exports.updateUserData = async (req, res, next) => {
     }
 };
 
+
+exports.createUser = async (req, res, next) => {
+    try {
+
+        const { address, fullName, nationalCode, birthday, shebaNumber, cardNumber
+            , fatherName, companyName, economicCode, registrationNumber, postalCode
+            , ostan, shahr, github, linkedin, telegram, instagram, twitter, biography
+        } = req.body;
+
+
+        let { role_id, email, password, userName } = req.body;
+
+        if (!role_id || role_id == "") {
+            throw { message: 'Role ID is required', statusCode: 400 }
+        }
+
+        const user = new User({
+            data: {
+                address,
+                fullName,
+                nationalCode,
+                birthday,
+                shebaNumber,
+                cardNumber,
+                fatherName,
+                companyName,
+                economicCode,
+                registrationNumber,
+                postalCode,
+                ostan,
+                shahr,
+                biography,
+                github,
+                linkedin,
+                telegram,
+                instagram,
+                twitter,
+            },
+            role_id,
+            email,
+            password,
+            userName
+        });
+
+        const savedUser = await user.save();
+
+        if (!savedUser) {
+            throw { message: 'User creation failed', statusCode: 400 }
+        }
+
+        res.status(201).json({
+            message: 'User created successfully',
+            user: savedUser
+        });
+
+    } catch (error) {
+        console.log("Error in User creation : " + error);
+        res.status(error.statusCode || 500).json({
+            message: error.message || 'Internal Server Error'
+        });
+    }
+};
 
 
 
