@@ -3,6 +3,7 @@ const { getBase64 } = require('@plaiceholder/base64');
 const { checkUserAccess } = require("../utils/user");
 const FileManager = require('../class/filemanager');
 const User = require("../database/models/User");
+const { log } = require('node:console');
 const fileManager = FileManager.getInstance();
 
 exports.securityCheck = async (req, res, next) => {
@@ -30,9 +31,11 @@ exports.securityCheck = async (req, res, next) => {
 exports.userInformation = async (req, res, next) => {
     try {
         let { user_id } = req.body;
+
         if (!user_id || user_id == "") {
             user_id = req.user._id;
         }
+
         const permissions = await User.userPermissions(user_id);
         const user = await User.findOne({ _id: user_id }).populate('role_id', '-permissions').lean();
         res.send({
@@ -60,21 +63,27 @@ exports.changeAvatar = async (req, res, next) => {
         if (!req.file) {
             return res.status(400).json({ message: 'No file provided' });
         }
+        let { user_id } = req.body;
+
+        if (!user_id || user_id == "") {
+            user_id = req.user._id;
+        }
+
         const file = await fileManager.saveFile(req.file.buffer, {
-            uploaderId: req.user._id,
+            uploaderId: user_id,
             originalName: req.file.originalname,
             mimeType: req.file.mimetype,
             isPrivate: false,
-            folderPath: JSON.stringify(["", "users", req.user._id]),
+            folderPath: JSON.stringify(["", "users", user_id]),
         });
 
 
         const fileUrl = await fileManager.getPublicFileUrl(file[0]._id);
-        const filePath = await fileManager.getFilePath(file[0]._id, req.user._id, false);
+        const filePath = await fileManager.getFilePath(file[0]._id, user_id, false);
         const blurHash = await getBase64(filePath);
 
         const user = await User.updateOne(
-            { _id: req.user._id },
+            { _id: user_id },
             {
                 $set: {
                     'data.image': {
@@ -104,8 +113,16 @@ exports.updateUserData = async (req, res, next) => {
             , ostan, shahr, github, linkedin, telegram, instagram, twitter, biography
         } = req.body;
 
+        let { user_id, role_id } = req.body;
+
+        console.log(role_id);
+
+        if (!user_id || user_id == "") {
+            user_id = req.user._id;
+        }
+
         const user = await User.updateOne(
-            { _id: req.user._id },
+            { _id: user_id },
             {
                 $set: {
                     'data.address': address,
@@ -127,6 +144,7 @@ exports.updateUserData = async (req, res, next) => {
                     'data.telegram': telegram,
                     'data.instagram': instagram,
                     'data.twitter': twitter,
+                    'role_id':  role_id,
                 }
             }
         );

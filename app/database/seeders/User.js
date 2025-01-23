@@ -26,6 +26,21 @@ const seed = async (app) => {
 
         }
     });
+    await User.create({
+        token_id: result._id,
+        userName: "09137378602",
+        role_id: role[0]._id,
+        password: hashedPassword,
+        email: "cs.esmaeili1@gmail.com",
+        data: {
+            fullName: "اکبر اسماعیلی",
+            // image: {
+            //     blurHash,
+            //     url: process.env.BASE_URL + JSON.parse(process.env.STORAGE_LOCATION)[2] + "/1.jpg",
+            // },
+
+        }
+    });
     await console.log(`${red(seqNumber)} : ${green('User seed done')}`);
 }
 
