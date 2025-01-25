@@ -1,6 +1,3 @@
-const Factor = require('../models/Factor');
-const Product = require('../models/Product');
-const User = require('../models/User');
 const { green, red } = require('colors');
 const { utcToJalali, utcToMiladi } = require("../../utils/TimeConverter");
 

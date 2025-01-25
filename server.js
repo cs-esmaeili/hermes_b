@@ -12,7 +12,6 @@ const user = require("./app/routes/user");
 const auth = require("./app/routes/auth");
 const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
-const product = require("./app/routes/product");
 const permission = require("./app/routes/permission");
 const { getMainPartOfUrl } = require("./app/utils/general");
 const { backUpService } = require('./app/services/backUp');
@@ -79,7 +78,6 @@ const fileManager = require('./app/class/filemanager');
   app.use("/category", category);
   app.use("/post", post);
 
-  app.use("/product", product);
   app.use("/smsTemplate", smsTemplate);
   app.use("/smsHistory", smsHistory);
 
