@@ -81,7 +81,6 @@ const upload = multer({ storage: storage });
     } catch (error) {
       console.log(error);
     }
-    res.json({ id });
   });
   app.get('/file/:file_id/:token', downloadFile);
   app.use(checkRoutePermission);

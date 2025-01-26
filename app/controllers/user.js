@@ -71,10 +71,6 @@ exports.changeAvatar = async (req, res, next) => {
             user_id = req.user._id;
         }
 
-
-        console.log("////////////////// avatar ");
-        console.log(req.file);
-
         const file = await fileManager.saveFile(req.file.buffer, {
             uploaderId: user_id,
             originalName: req.file.originalname,

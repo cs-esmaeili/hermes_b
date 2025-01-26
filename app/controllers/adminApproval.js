@@ -1,16 +1,10 @@
 const AdminApproval = require('../database/models/AdminApproval');
 const AdminApprovalRoutes = require('./../static/AdminApproval.json');
-const { getApp } = require('../AppInstance');
-const { pathToRegexp } = require("path-to-regexp");
-const flatted = require("flatted");
 
 
 exports.addApproval = async (req, res, next) => {
     try {
         const existingApproval = await AdminApproval.findOne({ url: req.originalUrl });
-
-
-
         let createApproval;
         if (existingApproval) {
             createApproval = await AdminApproval.findByIdAndUpdate(
@@ -37,7 +31,7 @@ exports.addApproval = async (req, res, next) => {
                 query: req.query,
                 params: req.params,
                 comment: req.body.comment || '',
-                file:req.file,
+                file: req.file,
             });
         }
         res.status(201).json({
@@ -70,6 +64,7 @@ exports.processApprovalWithRoute = async (approvalId, res, next) => {
         const module = require(`../controllers/${approvalRoute.moduleName}.js`);
         await module[approvalRoute.method](orginalRequest, res, next);
 
+        await approval.deleteOne();
         return { message: 'Request processed successfully' };
     } catch (err) {
         console.error('Error processing approval:', err);
