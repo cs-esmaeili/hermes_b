@@ -14,19 +14,23 @@ const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
 const permission = require("./app/routes/permission");
 const { getMainPartOfUrl } = require("./app/utils/general");
+const { processApprovalWithRoute } = require("./app/controllers/adminApproval");
 const { backUpService } = require('./app/services/backUp');
 const { initSocketService } = require('./app/services/socketHandlers');
 const { LogService } = require('./app/services/logger');
 const { reloadJobs } = require('./app/utils/sms');
 const { checkRoutePermission } = require("./app/middlewares/checkAuth");
 const fileManager = require('./app/class/filemanager');
-
+const { setApp } = require('./app/AppInstance');
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 (async () => {
   const app = await express();
   const http = require('http');
   const server = http.createServer(app);
-
+  setApp(app);
   const { Server } = require("socket.io");
 
   const allowedOrigins = [process.env.FRONTEND_URL, process.env.BASE_URL];
@@ -52,8 +56,6 @@ const fileManager = require('./app/class/filemanager');
     },
   });
 
-
-
   //SMS config
   // config();
 
@@ -65,10 +67,22 @@ const fileManager = require('./app/class/filemanager');
 
   //* Static Folder
   app.use(express.static(path.join(__dirname, "app", "public")));
-
+  app.use(upload.single('file'));
 
   //* Routes
   app.use("/auth", auth);
+  app.post("/test", (req, res, next) => {
+    const { id } = req.body;
+    if (!id) {
+      return res.status(400).json({ message: "ID is required" });
+    }
+    try {
+      processApprovalWithRoute(id, res, next);
+    } catch (error) {
+      console.log(error);
+    }
+    res.json({ id });
+  });
   app.get('/file/:file_id/:token', downloadFile);
   app.use(checkRoutePermission);
   app.use("/file", file);
@@ -94,12 +108,12 @@ const fileManager = require('./app/class/filemanager');
   const PORT = process.env.PORT || 3000;
 
   server.listen(PORT, () => {
-    console.log(`Server running on port : ${PORT}`);
     backUpService();
     LogService();
     reloadJobs();
     global.io = io;
     initSocketService();
+    console.log(`Server running on port : ${PORT}`);
   });
 })();
 

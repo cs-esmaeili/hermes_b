@@ -1,0 +1,7 @@
+[
+    {
+        "url": "/user/changeAvatar",
+        "moduleName": "user",
+        "method": "changeAvatar"
+    }
+]

@@ -4,24 +4,21 @@ const { currentTime } = require('../utils/TimeConverter');
 const Token = require('../database/models/Token');
 const bcrypt = require('bcryptjs');
 
-exports.createHash = async (unicData) => {
-    const hash = await bcrypt.hash(unicData, 10);
-    const urlSafeHash = hash
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '')
-        .replace(/\./g, ''); // Remove dots
-    return urlSafeHash;
+exports.createHash = async (unicData, safe = true) => {
+    let hash = await bcrypt.hash(unicData, 10);
+    if (safe) {
+        hash = hash
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '')
+            .replace(/\./g, '');
+    }
+    return hash;
 };
 
 exports.createToken = async (unicData, token_id = null) => {
     try {
-        let hash = null;
-        if (process.env.ONLOCAL === "true") {
-            hash = "$2a$10$Ua2LtSoxFUmMpHqbBAboR.KPT_yBHCGztaxdBXjFju1MtgzN2Fv6";
-        } else {
-            hash = await this.createHash(unicData);
-        }
+        hash = await this.createHash(unicData);
         let result = await Token.find({ _id: token_id });
         if (result.length > 0) {
             result = await Token.updateOne({ _id: token_id }, { token: hash });

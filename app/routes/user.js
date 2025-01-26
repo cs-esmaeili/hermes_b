@@ -15,7 +15,7 @@ const upload = multer({
 router.post("/userList", user.userList);
 router.post("/userInformation", user.userInformation);
 router.post("/securityCheck", user.securityCheck);
-router.post("/updateUserData", user.updateUserData);
 router.post("/createUser", user.createUser);
+router.post("/updateUserData", user.updateUserData);
 router.post('/changeAvatar', upload.single('file'), user.changeAvatar);
 module.exports = router;

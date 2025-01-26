@@ -61,14 +61,19 @@ exports.userList = async (req, res, next) => {
 
 exports.changeAvatar = async (req, res, next) => {
     try {
+        
         if (!req.file) {
             return res.status(400).json({ message: 'No file provided' });
         }
         let { user_id } = req.body;
-
+        
         if (!user_id || user_id == "") {
             user_id = req.user._id;
         }
+
+
+        console.log("////////////////// avatar ");
+        console.log(req.file);
 
         const file = await fileManager.saveFile(req.file.buffer, {
             uploaderId: user_id,
@@ -77,6 +82,7 @@ exports.changeAvatar = async (req, res, next) => {
             isPrivate: false,
             folderPath: JSON.stringify(["", "users", user_id]),
         });
+
 
 
         const fileUrl = await fileManager.getPublicFileUrl(file[0]._id);
