@@ -1,13 +1,13 @@
-const AdminApproval = require('../database/models/AdminApproval');
-const AdminApprovalRoutes = require('./../static/AdminApproval.json');
+const Approval = require('../database/models/Approval');
+const AdminApprovalRoutes = require('../static/AdminApproval.json');
 
 
 exports.addApproval = async (req, res, next) => {
     try {
-        const existingApproval = await AdminApproval.findOne({ url: req.originalUrl });
+        const existingApproval = await Approval.findOne({ url: req.originalUrl });
         let createApproval;
         if (existingApproval) {
-            createApproval = await AdminApproval.findByIdAndUpdate(
+            createApproval = await Approval.findByIdAndUpdate(
                 existingApproval._id,
                 {
                     method: req.method,
@@ -22,7 +22,7 @@ exports.addApproval = async (req, res, next) => {
                 { new: true }
             );
         } else {
-            createApproval = await AdminApproval.create({
+            createApproval = await Approval.create({
                 user: req.user,
                 method: req.method,
                 url: req.originalUrl,
@@ -49,7 +49,7 @@ exports.addApproval = async (req, res, next) => {
 
 exports.processApprovalWithRoute = async (approvalId, res, next) => {
     try {
-        const approval = await AdminApproval.findById(approvalId);
+        const approval = await Approval.findById(approvalId);
         if (!approval) {
             throw new Error('Approval request not found');
         }
@@ -72,3 +72,17 @@ exports.processApprovalWithRoute = async (approvalId, res, next) => {
     }
 };
 
+exports.approvalList = async (req, res, next) => {
+    try {
+        const { page, perPage } = req.body;
+        let approvals = await Approval.find({})
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean();
+
+        const approvalsCount = await Approval.countDocuments({});
+        res.send({ approvalsCount, approvals });
+    } catch (err) {
+        res.status(err.statusCode || 422).json(err.errors || err.message);
+    }
+}

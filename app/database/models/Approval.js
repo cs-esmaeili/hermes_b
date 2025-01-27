@@ -40,6 +40,6 @@ requestSchema.methods.toExpressRequest = function () {
 };
 
 
-module.exports = mongoose.model("AdminApproval", requestSchema, 'AdminApproval');
+module.exports = mongoose.model("Approval", requestSchema, 'Approval');
 
 

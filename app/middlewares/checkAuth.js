@@ -1,7 +1,7 @@
 const { extractBearer } = require('./../utils/bearer');
 const { refreshTokenTime, getToken } = require('../utils/token');
 const { checkUserAccess, getUserFromToken } = require('../utils/user');
-const { addApproval , processApprovalWithRoute } = require('../controllers/adminApproval');
+const { addApproval } = require('../controllers/approval');
 const passRoutes = require('./../static/PassRouts.json');
 const AdminApproval = require('./../static/AdminApproval.json');
 

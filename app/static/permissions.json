@@ -1,250 +1,258 @@
 {
     "/dashboard": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "داشبورد",
+        "disc": "دسترسی مورد نیاز برای مشاهده صفحه داشبورد"
     },
     "/user/securityCheck": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "لیست نقش‌ها",
+        "disc": "دسترسی مورد نیاز برای دریافت نقش‌ها"
     },
     "/smsHistory/smsHistoryList": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "تاریخچه پیامک‌ها",
+        "disc": "دسترسی مورد نیاز برای مشاهده تاریخچه پیامک‌ها"
     },
     "/smsHistory/deleteSmsHistory": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "حذف تاریخچه پیامک",
+        "disc": "دسترسی مورد نیاز برای حذف تاریخچه پیامک‌ها"
     },
     "/smsTemplate/cancelSendSmsToUser": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "لغو ارسال پیامک",
+        "disc": "دسترسی مورد نیاز برای لغو ارسال پیامک به کاربر"
     },
     "/smsTemplate/createSmsTemplate": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "ایجاد قالب پیامک",
+        "disc": "دسترسی مورد نیاز برای ایجاد قالب پیامک جدید"
     },
     "/smsTemplate/sendSmsToUser": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "ارسال پیامک",
+        "disc": "دسترسی مورد نیاز برای ارسال پیامک به کاربر"
     },
     "/smsTemplate/deleteSmsTemplate": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "حذف قالب پیامک",
+        "disc": "دسترسی مورد نیاز برای حذف قالب پیامک"
     },
     "/smsTemplate/SmsTemplateList": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "لیست قالب‌های پیامک",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست قالب‌های پیامک"
     },
     "/dashboard/product": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "مدیریت محصولات",
+        "disc": "دسترسی مورد نیاز برای مدیریت محصولات"
+    },
+    "/dashboard/approval": {
+        "name": "تایید مدیریت",
+        "disc": "دسترسی مورد نیاز برای تایید درخواست‌ها"
     },
     "/dashboard/smshistory": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "تاریخچه پیامک‌ها",
+        "disc": "دسترسی مورد نیاز برای مشاهده تاریخچه پیامک‌ها"
     },
     "/dashboard/profile": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "پروفایل",
+        "disc": "دسترسی مورد نیاز برای مشاهده و ویرایش پروفایل"
     },
     "/dashboard/sms": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "مدیریت پیامک‌ها",
+        "disc": "دسترسی مورد نیاز برای مدیریت پیامک‌ها"
     },
     "/dashboard/executeTrade": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "اجرای معامله",
+        "disc": "دسترسی مورد نیاز برای اجرای معاملات"
     },
     "/coWorker/executeTrade": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "اجرای معامله همکار",
+        "disc": "دسترسی مورد نیاز برای اجرای معاملات همکار"
     },
     "/apibox/apiBoxList": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "لیست API باکس",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست API باکس‌ها"
     },
     "/apibox/updateApiBox": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "بروزرسانی API باکس",
+        "disc": "دسترسی مورد نیاز برای بروزرسانی API باکس"
     },
     "/apibox/addApiBox": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "افزودن API باکس",
+        "disc": "دسترسی مورد نیاز برای افزودن API باکس جدید"
     },
     "/dashboard/admintradeportal": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "پورتال معاملات ادمین",
+        "disc": "دسترسی مورد نیاز برای مشاهده پورتال معاملات ادمین"
     },
     "/history/historyList": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "لیست تاریخچه",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست تاریخچه"
     },
     "/product/updateProduct": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "بروزرسانی محصول",
+        "disc": "دسترسی مورد نیاز برای بروزرسانی محصول"
     },
     "/product/updateAllProductPrices": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "بروزرسانی قیمت‌های محصولات",
+        "disc": "دسترسی مورد نیاز برای بروزرسانی قیمت تمام محصولات"
     },
     "/product/searchProduct": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "جستجوی محصول",
+        "disc": "دسترسی مورد نیاز برای جستجوی محصولات"
     },
     "/product/createProduct": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "ایجاد محصول",
+        "disc": "دسترسی مورد نیاز برای ایجاد محصول جدید"
     },
     "/dashboard/history": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "تاریخچه",
+        "disc": "دسترسی مورد نیاز برای مشاهده تاریخچه"
     },
     "/dashboard/filemanager": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "مدیریت فایل",
+        "disc": "دسترسی مورد نیاز برای مدیریت فایل‌ها"
     },
     "/dashboard/factors": {
-        "name": "Factors Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "فاکتورها",
+        "disc": "دسترسی مورد نیاز برای مدیریت فاکتورها"
     },
     "/factor/factorListUser": {
-        "name": "Factors Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "لیست فاکتورهای کاربر",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست فاکتورهای کاربر"
     },
     "/factor/changeFactorStatus": {
-        "name": "Factors Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "تغییر وضعیت فاکتور",
+        "disc": "دسترسی مورد نیاز برای تغییر وضعیت فاکتور"
     },
     "/dashboard/category": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "دسته‌بندی‌ها",
+        "disc": "دسترسی مورد نیاز برای مدیریت دسته‌بندی‌ها"
     },
     "/dashboard/post/createPost": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "ایجاد پست",
+        "disc": "دسترسی مورد نیاز برای ایجاد پست جدید"
     },
     "/dashboard/post/postList": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "لیست پست‌ها",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست پست‌ها"
     },
     "/dashboard/role": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "نقش‌ها",
+        "disc": "دسترسی مورد نیاز برای مدیریت نقش‌ها"
     },
     "/dashboard/users": {
-        "name": "Dashborad Page",
-        "disc": "This is Permission is need for see Dashborad Page "
+        "name": "کاربران",
+        "disc": "دسترسی مورد نیاز برای مدیریت کاربران"
     },
     "/user/userList": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "لیست کاربران",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست کاربران"
     },
     "/user/changeAvatar": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "تغییر تصویر پروفایل",
+        "disc": "دسترسی مورد نیاز برای تغییر تصویر پروفایل"
     },
     "/user/updateUserData": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "بروزرسانی اطلاعات کاربر",
+        "disc": "دسترسی مورد نیاز برای بروزرسانی اطلاعات کاربر"
     },
     "/role/roleList": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "لیست نقش‌ها",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست نقش‌ها"
     },
     "/role/createRole": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "ایجاد نقش",
+        "disc": "دسترسی مورد نیاز برای ایجاد نقش جدید"
     },
     "/role/deleteRole": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "حذف نقش",
+        "disc": "دسترسی مورد نیاز برای حذف نقش"
     },
     "/role/updateRole": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "بروزرسانی نقش",
+        "disc": "دسترسی مورد نیاز برای بروزرسانی نقش"
     },
     "/permission/togglePermission": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "تغییر وضعیت دسترسی",
+        "disc": "دسترسی مورد نیاز برای تغییر وضعیت دسترسی‌ها"
     },
     "/category/createCategory": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "ایجاد دسته‌بندی",
+        "disc": "دسترسی مورد نیاز برای ایجاد دسته‌بندی جدید"
     },
     "/category/deleteCategory": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "حذف دسته‌بندی",
+        "disc": "دسترسی مورد نیاز برای حذف دسته‌بندی"
     },
     "/category/updateCategory": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "بروزرسانی دسته‌بندی",
+        "disc": "دسترسی مورد نیاز برای بروزرسانی دسته‌بندی"
     },
     "/category/categoryList": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "لیست دسته‌بندی‌ها",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست دسته‌بندی‌ها"
     },
     "/post/postList": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "لیست پست‌ها",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست پست‌ها"
     },
     "/post/postSerach": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "جستجوی پست",
+        "disc": "دسترسی مورد نیاز برای جستجوی پست‌ها"
     },
     "/post/createPost": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "ایجاد پست",
+        "disc": "دسترسی مورد نیاز برای ایجاد پست جدید"
     },
     "/post/updatePost": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "بروزرسانی پست",
+        "disc": "دسترسی مورد نیاز برای بروزرسانی پست"
     },
     "/post/deletePost": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "حذف پست",
+        "disc": "دسترسی مورد نیاز برای حذف پست"
     },
     "/file/uploadFile": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "آپلود فایل",
+        "disc": "دسترسی مورد نیاز برای آپلود فایل"
     },
     "/file/deleteFile": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "حذف فایل",
+        "disc": "دسترسی مورد نیاز برای حذف فایل"
     },
     "/file/renameFile": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "تغییر نام فایل",
+        "disc": "دسترسی مورد نیاز برای تغییر نام فایل"
     },
     "/file/renameFolder": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "تغییر نام پوشه",
+        "disc": "دسترسی مورد نیاز برای تغییر نام پوشه"
     },
     "/file/createFolder": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "ایجاد پوشه",
+        "disc": "دسترسی مورد نیاز برای ایجاد پوشه جدید"
     },
     "/file/deleteFolder": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "حذف پوشه",
+        "disc": "دسترسی مورد نیاز برای حذف پوشه"
     },
     "/file/listFiles": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "لیست فایل‌ها",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست فایل‌ها"
     },
     "/user/userInformation": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "اطلاعات کاربر",
+        "disc": "دسترسی مورد نیاز برای مشاهده اطلاعات کاربر"
     },
     "/user/createUser": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "ایجاد کاربر",
+        "disc": "دسترسی مورد نیاز برای ایجاد کاربر جدید"
     },
     "/site/updateFirstPage": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "بروزرسانی صفحه اول",
+        "disc": "دسترسی مورد نیاز برای بروزرسانی صفحه اول"
     },
     "/product/productList": {
-        "name": "Role List",
-        "disc": "This is Permission is need for get Roles "
+        "name": "لیست محصولات",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست محصولات"
+    },
+    "/approval/approvalList": {
+        "name": "لیست درخواست ها",
+        "disc": "دسترسی مورد نیاز برای مشاهده لیست درخواست ها"
     }
 }
