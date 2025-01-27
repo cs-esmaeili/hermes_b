@@ -20,9 +20,9 @@ exports.addApproval = async (req, res, next) => {
                     body: req.body,
                     query: req.query,
                     params: req.params,
-                    comment: req.body.comment || '',
                     file: req.file,
-                    user: req.user
+                    user: req.user,
+                    status: "pending"
                 },
                 { new: true }
             );
@@ -79,6 +79,31 @@ exports.processApproval = async (req, res, next) => {
         throw err;
     }
 };
+
+exports.rejectApproval = async (req, res, next) => {
+    try {
+        const { approval_id, comment } = req.body;
+
+        if (!approval_id) {
+            return res.status(400).json({ error: "Approval ID is required." });
+        }
+
+        const result = await Approval.updateOne(
+            { _id: approval_id },
+            { $set: { comment, status: "rejected" } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: "Approval not found." });
+        }
+
+        return res.status(200).json({ message: "Approval rejected successfully." });
+    } catch (err) {
+        console.error("Error processing approval:", err);
+        next(err);
+    }
+};
+
 
 exports.approvalList = async (req, res, next) => {
     try {

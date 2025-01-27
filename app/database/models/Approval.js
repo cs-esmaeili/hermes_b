@@ -27,7 +27,13 @@ const requestSchema = buildSchema({
     comment: { type: String, default: "" },
     timestamp: { type: Date, default: Date.now },
     file: fileSchema,
+    status: {
+        type: String,
+        enum: ['pending', 'rejected'],
+        default: 'pending'           
+    }
 });
+
 
 requestSchema.methods.toExpressRequest = function () {
 
