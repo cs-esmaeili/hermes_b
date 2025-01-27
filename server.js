@@ -15,7 +15,6 @@ const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
 const permission = require("./app/routes/permission");
 const { getMainPartOfUrl } = require("./app/utils/general");
-const { processApprovalWithRoute } = require("./app/controllers/approval");
 const { backUpService } = require('./app/services/backUp');
 const { initSocketService } = require('./app/services/socketHandlers');
 const { LogService } = require('./app/services/logger');
@@ -72,17 +71,6 @@ const upload = multer({ storage: storage });
 
   //* Routes
   app.use("/auth", auth);
-  app.post("/test", (req, res, next) => {
-    const { id } = req.body;
-    if (!id) {
-      return res.status(400).json({ message: "ID is required" });
-    }
-    try {
-      processApprovalWithRoute(id, res, next);
-    } catch (error) {
-      console.log(error);
-    }
-  });
   app.get('/file/:file_id/:token', downloadFile);
   app.use(checkRoutePermission);
   app.use("/approval", approval);

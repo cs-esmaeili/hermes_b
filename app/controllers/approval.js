@@ -1,15 +1,20 @@
 const Approval = require('../database/models/Approval');
 const AdminApprovalRoutes = require('../static/AdminApproval.json');
-
+const Permission = require('../database/models/Permission');
 
 exports.addApproval = async (req, res, next) => {
     try {
         const existingApproval = await Approval.findOne({ url: req.originalUrl });
+
+        const permission = await Permission.findOne({ route: req.originalUrl });
+
+
         let createApproval;
         if (existingApproval) {
             createApproval = await Approval.findByIdAndUpdate(
                 existingApproval._id,
                 {
+                    urlMeta: { name: permission.name, disc: permission.disc },
                     method: req.method,
                     headers: req.headers,
                     body: req.body,
@@ -23,6 +28,7 @@ exports.addApproval = async (req, res, next) => {
             );
         } else {
             createApproval = await Approval.create({
+                urlMeta: { name: permission.name, disc: permission.disc },
                 user: req.user,
                 method: req.method,
                 url: req.originalUrl,
@@ -47,9 +53,11 @@ exports.addApproval = async (req, res, next) => {
     }
 };
 
-exports.processApprovalWithRoute = async (approvalId, res, next) => {
+exports.processApproval = async (req, res, next) => {
     try {
-        const approval = await Approval.findById(approvalId);
+        const { approval_id } = req.body;
+
+        const approval = await Approval.findById(approval_id);
         if (!approval) {
             throw new Error('Approval request not found');
         }

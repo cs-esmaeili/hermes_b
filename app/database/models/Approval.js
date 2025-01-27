@@ -16,6 +16,10 @@ const requestSchema = buildSchema({
     user: { type: mongoose.Schema.Types.Mixed },
     method: { type: String, required: true },
     url: { type: String, required: true },
+    urlMeta: {
+        name: { type: String, required: true },
+        disc: { type: String, required: true }
+    },
     headers: { type: Map, of: String, default: {} },
     body: { type: mongoose.Schema.Types.Mixed, default: {} },
     query: { type: Map, of: String, default: {} },
