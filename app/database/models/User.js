@@ -1,10 +1,9 @@
 const { buildSchema } = require("./builder");
 const { createToken, createHash } = require("../../utils/token");
-const bcrypt = require('bcryptjs');
 const Role = require("./Role");
 const mongoose = require("mongoose");
 
-const schema = new mongoose.Schema({
+const schema = buildSchema({
     token_id: {
         type: mongoose.ObjectId,
         ref: 'Token',
@@ -73,6 +72,16 @@ const schema = new mongoose.Schema({
         instagram: String,
         twitter: String,
     },
+});
+
+schema.pre('save', function (next) {
+    if (this.userName === "") {
+        this.userName = undefined; 
+    }
+    if (this.email === "") {
+        this.email = undefined; 
+    }
+    next();
 });
 
 schema.pre('validate', function (next) {

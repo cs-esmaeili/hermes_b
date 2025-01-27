@@ -51,7 +51,12 @@ exports.userInformation = async (req, res, next) => {
 exports.userList = async (req, res, next) => {
     try {
         const { page, perPage } = req.body;
-        let users = await User.find({}).populate('role_id', '-permissions').skip((page - 1) * perPage).limit(perPage).lean();
+        let users = await User.find({ _id: { $ne: req.user._id } })
+            .populate('role_id', '-permissions')
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean();
+
         const usersCount = await User.countDocuments({});
         res.send({ usersCount, users });
     } catch (err) {
@@ -61,12 +66,12 @@ exports.userList = async (req, res, next) => {
 
 exports.changeAvatar = async (req, res, next) => {
     try {
-        
+
         if (!req.file) {
             return res.status(400).json({ message: 'No file provided' });
         }
         let { user_id } = req.body;
-        
+
         if (!user_id || user_id == "") {
             user_id = req.user._id;
         }

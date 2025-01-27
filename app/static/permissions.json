@@ -43,6 +43,10 @@
         "name": "Dashborad Page",
         "disc": "This is Permission is need for see Dashborad Page "
     },
+    "/dashboard/profile": {
+        "name": "Role List",
+        "disc": "This is Permission is need for get Roles "
+    },
     "/dashboard/sms": {
         "name": "Dashborad Page",
         "disc": "This is Permission is need for see Dashborad Page "
