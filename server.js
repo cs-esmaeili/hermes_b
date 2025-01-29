@@ -10,6 +10,7 @@ const post = require("./app/routes/post");
 const role = require("./app/routes/role");
 const user = require("./app/routes/user");
 const auth = require("./app/routes/auth");
+const course = require("./app/routes/course");
 const approval = require("./app/routes/approval");
 const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
@@ -58,7 +59,7 @@ const upload = multer({ storage: storage });
 
   //SMS config
   // config();
-
+  
   //* BodyPaser
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
@@ -80,6 +81,7 @@ const upload = multer({ storage: storage });
   app.use("/permission", permission);
   app.use("/category", category);
   app.use("/post", post);
+  app.use("/course", course);
 
   app.use("/smsTemplate", smsTemplate);
   app.use("/smsHistory", smsHistory);

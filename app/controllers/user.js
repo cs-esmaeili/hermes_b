@@ -1,11 +1,10 @@
 const { mSearchUser } = require('../static/response.json');
 const { getBase64 } = require('@plaiceholder/base64');
 const { checkUserAccess } = require("../utils/user");
-const FileManager = require('../class/filemanager');
 const User = require("../database/models/User");
-const { log } = require('node:console');
-const fileManager = FileManager.getInstance();
 const { createHash } = require("../utils/token");
+const FileManager = require('../class/filemanager');
+const fileManager = FileManager.getInstance();
 
 exports.securityCheck = async (req, res, next) => {
     try {

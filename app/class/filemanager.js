@@ -114,6 +114,13 @@ class FileManager {
             isPrivate,
             metadata,
         }]);
+        
+        if (isPrivate) {
+            const fileAccess = await this.FileAccess.create([{
+                file_id: file[0]._id,
+                accessList: [{ userId: uploaderId, accessLevel: "write" }]
+            }]);
+        }
         await fs.writeFile(fullFilePath, fileBuffer);
         return file;
     }

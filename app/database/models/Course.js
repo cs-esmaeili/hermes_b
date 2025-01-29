@@ -15,10 +15,14 @@ const CourseSchema = buildSchema({
         type: String,
         required: true,
         enum: ['active', 'inactive', 'completed'],
-        default: 'active'
+        default: 'inactive'
     },
     level: { type: String, required: true },
     metadata: { type: Map, of: mongoose.Schema.Types.Mixed },
+    image: {
+        url: String,
+        blurHash: String,
+    },
 });
 
 module.exports = mongoose.model("Course", CourseSchema, 'Course');
