@@ -1,112 +1,25 @@
 const Approval = require('../database/models/Approval');
-const AdminApprovalRoutes = require('../static/AdminApproval.json');
-const Permission = require('../database/models/Permission');
+const mongoose = require('mongoose');
 
-exports.addApproval = async (req, res, next) => {
+exports.createApproval = async (title, model, field, user_id, comment) => {
     try {
-        const existingApproval = await Approval.findOne({ url: req.originalUrl });
-
-        const permission = await Permission.findOne({ route: req.originalUrl });
-
-
-        let createApproval;
-        if (existingApproval) {
-            createApproval = await Approval.findByIdAndUpdate(
-                existingApproval._id,
-                {
-                    urlMeta: { name: permission.name, disc: permission.disc },
-                    method: req.method,
-                    headers: req.headers,
-                    body: req.body,
-                    query: req.query,
-                    params: req.params,
-                    file: req.file,
-                    user: req.user,
-                    status: "pending"
-                },
-                { new: true }
-            );
-        } else {
-            createApproval = await Approval.create({
-                urlMeta: { name: permission.name, disc: permission.disc },
-                user: req.user,
-                method: req.method,
-                url: req.originalUrl,
-                headers: req.headers,
-                body: req.body,
-                query: req.query,
-                params: req.params,
-                comment: req.body.comment || '',
-                file: req.file,
-            });
-        }
-        res.status(201).json({
-            message: 'Request saved successfully',
-            approval: createApproval,
-        });
-    } catch (err) {
-        console.error('Error while saving approval:', err);
-        res.status(err.statusCode || 500).json({
-            message: 'Failed to save approval',
-            error: err.message,
-        });
-    }
-};
-
-exports.processApproval = async (req, res, next) => {
-    try {
-        const { approval_id } = req.body;
-
-        const approval = await Approval.findById(approval_id);
-        if (!approval) {
-            throw new Error('Approval request not found');
-        }
-        const { url } = approval;
-        const orginalRequest = await approval.toExpressRequest();
-
-        const approvalRoute = AdminApprovalRoutes.find(approval => approval.url.includes(url));
-        if (!approvalRoute) {
-            throw new Error('Route not found to execute !');
-        }
-
-        const module = require(`../controllers/${approvalRoute.moduleName}.js`);
-        await module[approvalRoute.method](orginalRequest, res, next);
-
-        await approval.deleteOne();
-        return { message: 'Request processed successfully' };
-    } catch (err) {
-        console.error('Error processing approval:', err);
-        throw err;
-    }
-};
-
-exports.rejectApproval = async (req, res, next) => {
-    try {
-        const { approval_id, comment } = req.body;
-
-        if (!approval_id) {
-            return res.status(400).json({ error: "Approval ID is required." });
-        }
-
-        const result = await Approval.updateOne(
-            { _id: approval_id },
-            { $set: { comment, status: "rejected" } }
+        const approval = await Approval.findOneAndUpdate(
+            { model, field, user_id },
+            { title, comment, status: "pending" },
+            { new: true, upsert: true }
         );
 
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ message: "Approval not found." });
-        }
-
-        return res.status(200).json({ message: "Approval rejected successfully." });
-    } catch (err) {
-        console.error("Error processing approval:", err);
-        next(err);
+        return approval;
+    } catch (error) {
+        console.error("Error processing approval:", error);
+        throw error;
     }
 };
 
 
-exports.approvalList = async (req, res, next) => {
+exports.getApprovals = async (req, res, next) => {
     try {
+
         const { page, perPage } = req.body;
         let approvals = await Approval.find({})
             .skip((page - 1) * perPage)
@@ -116,6 +29,57 @@ exports.approvalList = async (req, res, next) => {
         const approvalsCount = await Approval.countDocuments({});
         res.send({ approvalsCount, approvals });
     } catch (err) {
+        console.log(err);
+
         res.status(err.statusCode || 422).json(err.errors || err.message);
     }
-}
+};
+
+exports.acceptApproval = async (req, res, next) => {
+    try {
+        const { approval_id } = req.body;
+        const approval = await Approval.findById(approval_id);
+
+        if (!approval) {
+            console.log("Approval not found");
+            return null;
+        }
+
+        const { model, field } = approval;
+        const Model = mongoose.model(model);
+
+        await Model.updateOne({ approval_id }, { approval_id: null });
+
+        await Approval.findByIdAndRemove(approval_id);
+
+        res.send({ message: 'Approval Accepted successfully' });
+    } catch (error) {
+        console.error("Error processing approval:", error);
+        throw error;
+    }
+};
+
+exports.rejectApproval = async (req, res, next) => {
+    try {
+        const { approval_id, comment } = req.body;
+
+        if (!approval_id) {
+            return res.status(400).send({ message: "Approval ID is required" });
+        }
+
+        const approval = await Approval.findOneAndUpdate(
+            { _id: approval_id },
+            { status: "rejected", comment },
+            { new: true }
+        );
+
+        if (!approval) {
+            return res.status(404).send({ message: "Approval not found" });
+        }
+
+        res.send({ message: "Approval rejected successfully", approval });
+    } catch (error) {
+        console.error("Error processing approval:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+    }
+};

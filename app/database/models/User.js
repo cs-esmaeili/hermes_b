@@ -8,6 +8,12 @@ const schema = buildSchema({
         type: mongoose.ObjectId,
         ref: 'Token',
     },
+    approval_id: {
+        type: mongoose.ObjectId,
+        ref: 'Approval',
+        required: false,
+        default: null
+    },
     role_id: {
         type: mongoose.ObjectId,
         required: true,
@@ -47,6 +53,7 @@ const schema = buildSchema({
     password: {
         type: String,
     },
+
     data: {
         image: {
             url: String,
@@ -76,10 +83,10 @@ const schema = buildSchema({
 
 schema.pre('save', function (next) {
     if (this.userName === "") {
-        this.userName = undefined; 
+        this.userName = undefined;
     }
     if (this.email === "") {
-        this.email = undefined; 
+        this.email = undefined;
     }
     next();
 });

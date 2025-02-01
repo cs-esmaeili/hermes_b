@@ -4,6 +4,7 @@ const { checkUserAccess } = require("../utils/user");
 const User = require("../database/models/User");
 const { createHash } = require("../utils/token");
 const FileManager = require('../class/filemanager');
+const { createApproval } = require('../controllers/approval');
 const fileManager = FileManager.getInstance();
 
 exports.securityCheck = async (req, res, next) => {
@@ -37,7 +38,8 @@ exports.userInformation = async (req, res, next) => {
         }
 
         const permissions = await User.userPermissions(user_id);
-        const user = await User.findOne({ _id: user_id }).populate('role_id', '-permissions').lean();
+        const user = await User.findOne({ _id: user_id }).populate('role_id', '-permissions').populate('approval_id').lean();
+        
         res.send({
             permissions,
             information: user
@@ -52,6 +54,7 @@ exports.userList = async (req, res, next) => {
         const { page, perPage } = req.body;
         let users = await User.find({ _id: { $ne: req.user._id } })
             .populate('role_id', '-permissions')
+            .populate('approval_id')
             .skip((page - 1) * perPage)
             .limit(perPage)
             .lean();
@@ -69,11 +72,10 @@ exports.changeAvatar = async (req, res, next) => {
         if (!req.file) {
             return res.status(400).json({ message: 'No file provided' });
         }
-        let { user_id } = req.body;
 
-        if (!user_id || user_id == "") {
-            user_id = req.user._id;
-        }
+        let { user_id = req.user._id } = req.body;
+
+
 
         const file = await fileManager.saveFile(req.file.buffer, {
             uploaderId: user_id,
@@ -84,15 +86,17 @@ exports.changeAvatar = async (req, res, next) => {
         });
 
 
-
         const fileUrl = await fileManager.getPublicFileUrl(file[0]._id);
         const filePath = await fileManager.getFilePath(file[0]._id, user_id, false);
         const blurHash = await getBase64(filePath);
+
+        const approval = await createApproval("تغییر عکس پروفایل", "User", "approval", user_id,);
 
         const user = await User.updateOne(
             { _id: user_id },
             {
                 $set: {
+                    'approval_id': approval._id,
                     'data.image': {
                         url: fileUrl,
                         blurHash
@@ -126,6 +130,7 @@ exports.updateUserData = async (req, res, next) => {
         if (!user_id || user_id == "") {
             user_id = req.user._id;
         }
+        const approval = await createApproval("تغییر اطلاعات پروفایل", "User", "approval", user_id);
         const updateData = {
             'data.address': address,
             'data.fullName': fullName,
@@ -148,7 +153,8 @@ exports.updateUserData = async (req, res, next) => {
             'data.twitter': twitter,
             'role_id': role_id,
             'email': email,
-            'userName': userName
+            'userName': userName,
+            'approval_id': approval._id,
         };
 
         if (password) {

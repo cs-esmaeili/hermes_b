@@ -1,9 +1,7 @@
 const { extractBearer } = require('./../utils/bearer');
 const { refreshTokenTime, getToken } = require('../utils/token');
 const { checkUserAccess, getUserFromToken } = require('../utils/user');
-const { addApproval } = require('../controllers/approval');
 const passRoutes = require('./../static/PassRouts.json');
-const AdminApproval = require('./../static/AdminApproval.json');
 
 exports.checkRoutePermission = async (req, res, next) => {
     try {
@@ -22,6 +20,7 @@ exports.checkRoutePermission = async (req, res, next) => {
         const bearerToken = extractBearer(authHeader);
         req.token = bearerToken;
 
+        
         const userCheck = await checkUserAccess(bearerToken, currentRoute);
         if (!userCheck) {
             throw { message: 'Access denied: Insufficient permissions', statusCode: 403 };
@@ -34,11 +33,6 @@ exports.checkRoutePermission = async (req, res, next) => {
 
         req.user = user;
 
-        const approvalRoute = AdminApproval.find(approval => approval.url.includes(currentRoute));
-        if (approvalRoute) {
-            addApproval(req, res, next);
-            return;
-        }
         next();
     } catch (err) {
         console.log(err);

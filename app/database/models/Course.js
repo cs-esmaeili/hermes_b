@@ -7,6 +7,7 @@ const CourseSchema = buildSchema({
     courseName: { type: String, required: true },
     description: { type: String, required: true },
     courseMaterials: [{
+        title: { type: String, required: true },
         file_id: { type: mongoose.ObjectId, ref: 'File', required: true },
         order: { type: Number, required: true }
     }],

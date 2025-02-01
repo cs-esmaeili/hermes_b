@@ -74,7 +74,6 @@ const upload = multer({ storage: storage });
   app.use("/auth", auth);
   app.get('/file/:file_id/:token', downloadFile);
   app.use(checkRoutePermission);
-  app.use("/approval", approval);
   app.use("/file", file);
   app.use("/user", user);
   app.use("/role", role);
@@ -82,7 +81,7 @@ const upload = multer({ storage: storage });
   app.use("/category", category);
   app.use("/post", post);
   app.use("/course", course);
-
+  app.use("/approval", approval);
   app.use("/smsTemplate", smsTemplate);
   app.use("/smsHistory", smsHistory);
 
