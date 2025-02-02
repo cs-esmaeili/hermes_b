@@ -49,7 +49,7 @@ exports.refreshTokenTime = async (token_id) => {
 
     const updateResult = await Token.updateOne({ _id: token_id }, { updatedAt: newTime });
 
-    if (updateResult.modifiedCount != 1) {
+    if (!updateResult.acknowledged) {
         throw { message: 'Token time cannot be refreshed', statusCode: 500 };
     }
 
