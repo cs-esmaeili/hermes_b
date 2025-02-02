@@ -19,11 +19,6 @@ const schema = buildSchema({
         required: true,
         ref: 'Role',
     },
-    socket_id: {
-        type: String,
-        unique: true,
-        sparse: true,
-    },
     userName: {
         type: String,
         unique: true,

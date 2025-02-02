@@ -5,6 +5,7 @@ const User = require("../database/models/User");
 const { createHash } = require("../utils/token");
 const FileManager = require('../class/filemanager');
 const { createApproval } = require('../controllers/approval');
+const Approval = require('../database/models/Approval');
 const fileManager = FileManager.getInstance();
 
 exports.securityCheck = async (req, res, next) => {
@@ -39,10 +40,15 @@ exports.userInformation = async (req, res, next) => {
 
         const permissions = await User.userPermissions(user_id);
         const user = await User.findOne({ _id: user_id }).populate('role_id', '-permissions').populate('approval_id').lean();
-        
+
+        let finalUser = user;
+        if (user.approval_id) {
+            finalUser = user.approval_id;
+        }
+
         res.send({
             permissions,
-            information: user
+            information: finalUser
         });
     } catch (err) {
         console.log(err);
@@ -90,13 +96,13 @@ exports.changeAvatar = async (req, res, next) => {
         const filePath = await fileManager.getFilePath(file[0]._id, user_id, false);
         const blurHash = await getBase64(filePath);
 
-        const approval = await createApproval("تغییر عکس پروفایل", "User", "approval", user_id,);
 
-        const user = await User.updateOne(
+        let orginalUser = await User.findOne({ _id: user_id }).lean();
+        const approval = await createApproval("تغییر عکس پروفایل", "User", user_id, orginalUser);
+        const approvalChanges = await Approval.updateOne(
             { _id: user_id },
             {
                 $set: {
-                    'approval_id': approval._id,
                     'data.image': {
                         url: fileUrl,
                         blurHash
@@ -130,7 +136,6 @@ exports.updateUserData = async (req, res, next) => {
         if (!user_id || user_id == "") {
             user_id = req.user._id;
         }
-        const approval = await createApproval("تغییر اطلاعات پروفایل", "User", "approval", user_id);
         const updateData = {
             'data.address': address,
             'data.fullName': fullName,
@@ -154,7 +159,6 @@ exports.updateUserData = async (req, res, next) => {
             'role_id': role_id,
             'email': email,
             'userName': userName,
-            'approval_id': approval._id,
         };
 
         if (password) {
@@ -162,19 +166,21 @@ exports.updateUserData = async (req, res, next) => {
             updateData['password'] = hashPassword;
         }
 
-        const user = await User.updateOne(
+        let orginalUser = await User.findOne({ _id: user_id }).lean();
+        const approval = await createApproval("تغییر اطلاعات پروفایل", "User", user_id, orginalUser);
+        const approvalChanges = await Approval.updateOne(
             { _id: user_id },
             { $set: updateData }
         );
 
 
-        if (!user.acknowledged) {
+        if (!approvalChanges.acknowledged) {
             throw { message: 'User update failed', statusCode: 400 }
         }
 
         res.status(201).json({
             message: 'User data update successfully',
-            user
+            approvalChanges
         });
 
     } catch (error) {

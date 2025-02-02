@@ -2,8 +2,7 @@ const Course = require("../database/models/Course");
 const Category = require("../database/models/Category");
 const FileManager = require('../class/filemanager');
 const fileManager = FileManager.getInstance();
-const { getBase64 } = require('@plaiceholder/base64');
-const User = require("../database/models/User");
+const { createApproval } = require('../controllers/approval');
 
 exports.addCourse = async (req, res, next) => {
     try {
@@ -32,12 +31,15 @@ exports.addCourse = async (req, res, next) => {
         const filePath = await fileManager.getFilePath(uplodedFile[0]._id, user_id, false);
         const blurHash = "s";//await getBase64(filePath);
 
+        const approval = await createApproval("ایجاد دوره", "Course", "approval_id", user_id);
+
         const newCourse = await Course.create({
             teacher_id: user_id,
             courseName,
             description,
             category_id,
             level,
+            approval_id: approval._id,
             image: {
                 url: fileUrl,
                 blurHash

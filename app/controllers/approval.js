@@ -1,14 +1,26 @@
 const Approval = require('../database/models/Approval');
 const mongoose = require('mongoose');
 
-exports.createApproval = async (title, model, field, user_id, comment) => {
+exports.createApproval = async (title, model, user_id, orginalData, comment) => {
     try {
+        const Model = mongoose.model(model);
+
+
         const approval = await Approval.findOneAndUpdate(
-            { model, field, user_id },
-            { title, comment, status: "pending" },
+            { model, user_id },
+            { ...orginalData, title, comment, status: "pending" },
             { new: true, upsert: true }
         );
 
+
+        await Model.updateOne(
+            { _id: orginalData._id },
+            {
+                $set: {
+                    'approval_id': approval._id,
+                }
+            }
+        );
         return approval;
     } catch (error) {
         console.error("Error processing approval:", error);
@@ -38,26 +50,31 @@ exports.getApprovals = async (req, res, next) => {
 exports.acceptApproval = async (req, res, next) => {
     try {
         const { approval_id } = req.body;
-        const approval = await Approval.findById(approval_id);
 
+        let approval = await Approval.findById(approval_id);
         if (!approval) {
-            console.log("Approval not found");
-            return null;
+            return res.status(404).send({ message: "Approval not found" });
         }
 
-        const { model, field } = approval;
+        const { model } = approval;
         const Model = mongoose.model(model);
 
-        await Model.updateOne({ approval_id }, { approval_id: null });
+        approval.approval_id = undefined;
+        const updateResult = await Model.updateMany({ _id: approval._id }, { $set: approval });
+
+        if (updateResult.modifiedCount === 0) {
+            return res.status(404).send({ message: "Approval ID not found in target model" });
+        }
 
         await Approval.findByIdAndRemove(approval_id);
 
-        res.send({ message: 'Approval Accepted successfully' });
+        res.send({ message: "Approval accepted successfully" });
     } catch (error) {
         console.error("Error processing approval:", error);
-        throw error;
+        res.status(500).send({ message: "Internal Server Error" });
     }
 };
+
 
 exports.rejectApproval = async (req, res, next) => {
     try {
