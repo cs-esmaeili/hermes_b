@@ -3,6 +3,7 @@ const Category = require("../database/models/Category");
 const FileManager = require('../class/filemanager');
 const fileManager = FileManager.getInstance();
 const { createApproval } = require('../controllers/approval');
+const Approval = require('../database/models/Approval');
 
 exports.addCourse = async (req, res, next) => {
     try {
@@ -12,6 +13,7 @@ exports.addCourse = async (req, res, next) => {
         }
 
         const { courseName, description, level } = await req.body;
+
         const { file: { buffer, originalname, mimetype }, user: { _id: user_id } } = await req;
         let { category_id } = await req.body;
 
@@ -23,7 +25,7 @@ exports.addCourse = async (req, res, next) => {
             originalName: originalname,
             mimeType: mimetype,
             isPrivate: true,
-            folderPath: JSON.stringify(["", "users", user_id, JSON.parse(courseName)]),
+            folderPath: JSON.stringify(["", "users", user_id, courseName]),
         });
 
 
@@ -31,7 +33,6 @@ exports.addCourse = async (req, res, next) => {
         const filePath = await fileManager.getFilePath(uplodedFile[0]._id, user_id, false);
         const blurHash = "s";//await getBase64(filePath);
 
-        const approval = await createApproval("ایجاد دوره", "Course", "approval_id", user_id);
 
         const newCourse = await Course.create({
             teacher_id: user_id,
@@ -39,12 +40,14 @@ exports.addCourse = async (req, res, next) => {
             description,
             category_id,
             level,
-            approval_id: approval._id,
             image: {
                 url: fileUrl,
                 blurHash
             }
         });
+
+
+        const approval = await createApproval("ثبت اطلاعات دوره", "Course", user_id, newCourse);
 
         if (!newCourse) {
             throw { message: 'Course create failed', statusCode: 400 }

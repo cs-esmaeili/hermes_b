@@ -11,10 +11,9 @@ const CourseSchema = buildSchema({
         title: { type: String, required: true },
         file_id: { type: mongoose.ObjectId, ref: 'File', required: true },
         order: { type: Number, required: true },
-        approval_id: { type: mongoose.ObjectId, ref: 'Approval', required: false, default: null },
     }],
     students: [{ type: mongoose.ObjectId, ref: 'User' }],
-    state: {
+    status: {
         type: String,
         required: true,
         enum: ['active', 'inactive', 'completed'],

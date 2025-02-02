@@ -51,7 +51,7 @@ exports.acceptApproval = async (req, res, next) => {
     try {
         const { approval_id } = req.body;
 
-        let approval = await Approval.findById(approval_id);
+        let approval = await Approval.findById(approval_id).lean();
         if (!approval) {
             return res.status(404).send({ message: "Approval not found" });
         }
@@ -59,7 +59,11 @@ exports.acceptApproval = async (req, res, next) => {
         const { model } = approval;
         const Model = mongoose.model(model);
 
-        approval.approval_id = undefined;
+        approval.approval_id = null;
+        if (approval.status)
+            approval.status = "active";
+
+
         const updateResult = await Model.updateMany({ _id: approval._id }, { $set: approval });
 
         if (updateResult.modifiedCount === 0) {
