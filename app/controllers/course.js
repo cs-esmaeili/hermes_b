@@ -51,6 +51,7 @@ exports.addCourse = async (req, res, next) => {
             throw { message: 'Course create failed', statusCode: 400 }
         }
 
+        
         res.json({ message: "Course Created", course_id: newCourse._id });
     } catch (err) {
         console.log(err);
@@ -61,25 +62,24 @@ exports.addCourse = async (req, res, next) => {
 
 exports.editCourse = async (req, res, next) => {
     try {
-        const { course_id } = req.params; // Get course_id from the request parameters
-        const { courseName, description, level, category_id } = req.body;
-        const { file, user: { _id: user_id } } = req;
-        
-        // Check if the course exists
+        const { course_id, courseName, description, level } = req.body;
+        let { category_id } = await req.body;
+
+        category_id = (await Category.find({}))[0]._id;
+
+        const { file, user: { _id: user_id } } = await req;
+
+
         const existingCourse = await Course.findById(course_id);
         if (!existingCourse) {
             return res.status(404).json({ message: 'Course not found' });
         }
 
-        // Set category_id if it's not provided (use the first category in the database)
-        const updatedCategoryId = category_id || (await Category.find({}))[0]._id;
 
-        // Prepare file upload logic if a new file is provided
         let imageData = existingCourse.image;
         if (file) {
             const { buffer, originalname, mimetype } = file;
 
-            // Save new file and get its URL
             const uploadedFile = await fileManager.saveFile(buffer, {
                 uploaderId: user_id,
                 originalName: originalname,
@@ -90,29 +90,25 @@ exports.editCourse = async (req, res, next) => {
 
             const fileUrl = await fileManager.getPublicFileUrl(uploadedFile[0]._id);
             const filePath = await fileManager.getFilePath(uploadedFile[0]._id, user_id, false);
-            const blurHash = "s"; // Replace with getBase64(filePath) if needed
 
-            // Update the image data
             imageData = {
                 url: fileUrl,
                 blurHash
             };
         }
 
-        // Update the course with the new details
         const updatedCourse = await Course.findByIdAndUpdate(
             course_id,
             {
                 courseName,
                 description,
                 level,
-                category_id: updatedCategoryId,
+                category_id,
                 image: imageData,
             },
-            { new: true } // To return the updated course
+            { new: true }
         );
 
-        // Create approval for the course update (if necessary)
         await createApproval("ویرایش اطلاعات دوره", "Course", user_id, updatedCourse.toObject());
 
         res.json({ message: "Course updated", course_id: updatedCourse._id });
@@ -154,3 +150,32 @@ exports.courseList = async (req, res, next) => {
         res.status(err.statusCode || 422).json(err.errors || err.message);
     }
 };
+
+exports.courseInformation = async (req, res, next) => {
+    try {
+        let { course_id } = req.body;
+
+        const course = await Course.findOne({ _id: course_id })
+            .populate("teacher_id")
+            .populate("category_id")
+            .populate("approval_id")
+            .populate({
+                path: "courseMaterials.file_id",
+                model: "File",
+            })
+            .populate("students")
+            .lean();
+
+
+        let finalCourse = course;
+        if (course?.approval_id) {
+            finalCourse = course.approval_id;
+        }
+
+        res.send({
+            course: finalCourse
+        });
+    } catch (err) {
+        console.log(err);
+    }
+}
