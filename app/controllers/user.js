@@ -43,7 +43,7 @@ exports.userInformation = async (req, res, next) => {
 
         let finalUser = user;
         if (user.approval_id) {
-            finalUser = user.approval_id;
+            finalUser = user.approval_id.draft;
         }
 
         res.send({
@@ -98,12 +98,14 @@ exports.changeAvatar = async (req, res, next) => {
 
 
         let orginalUser = await User.findOne({ _id: user_id }).lean();
-        const approval = await createApproval("تغییر عکس پروفایل", "User", user_id, orginalUser);
+        const approval = await createApproval("تغییر عکس پروفایل", "User", user_id, orginalUser._id, orginalUser);
+
+
         const approvalChanges = await Approval.updateOne(
-            { _id: user_id },
+            { _id: approval._id },
             {
                 $set: {
-                    'data.image': {
+                    'draft.data.image': {
                         url: fileUrl,
                         blurHash
                     }
@@ -137,39 +139,39 @@ exports.updateUserData = async (req, res, next) => {
             user_id = req.user._id;
         }
         const updateData = {
-            'data.address': address,
-            'data.fullName': fullName,
-            'data.nationalCode': nationalCode,
-            'data.birthday': birthday,
-            'data.shebaNumber': shebaNumber,
-            'data.cardNumber': cardNumber,
-            'data.fatherName': fatherName,
-            'data.companyName': companyName,
-            'data.economicCode': economicCode,
-            'data.registrationNumber': registrationNumber,
-            'data.postalCode': postalCode,
-            'data.ostan': ostan,
-            'data.shahr': shahr,
-            'data.biography': biography,
-            'data.github': github,
-            'data.linkedin': linkedin,
-            'data.telegram': telegram,
-            'data.instagram': instagram,
-            'data.twitter': twitter,
-            'role_id': role_id,
-            'email': email,
-            'userName': userName,
+            'draft.data.address': address,
+            'draft.data.fullName': fullName,
+            'draft.data.nationalCode': nationalCode,
+            'draft.data.birthday': birthday,
+            'draft.data.shebaNumber': shebaNumber,
+            'draft.data.cardNumber': cardNumber,
+            'draft.data.fatherName': fatherName,
+            'draft.data.companyName': companyName,
+            'draft.data.economicCode': economicCode,
+            'draft.data.registrationNumber': registrationNumber,
+            'draft.data.postalCode': postalCode,
+            'draft.data.ostan': ostan,
+            'draft.data.shahr': shahr,
+            'draft.data.biography': biography,
+            'draft.data.github': github,
+            'draft.data.linkedin': linkedin,
+            'draft.data.telegram': telegram,
+            'draft.data.instagram': instagram,
+            'draft.data.twitter': twitter,
+            'draft.role_id': role_id,
+            'draft.email': email,
+            'draft.userName': userName,
         };
 
         if (password) {
             const hashPassword = await createHash(password);
-            updateData['password'] = hashPassword;
+            updateData['draft.password'] = hashPassword;
         }
 
         let orginalUser = await User.findOne({ _id: user_id }).lean();
-        const approval = await createApproval("تغییر اطلاعات پروفایل", "User", user_id, orginalUser);
+        const approval = await createApproval("تغییر اطلاعات پروفایل", "User", user_id, orginalUser._id, orginalUser);
         const approvalChanges = await Approval.updateOne(
-            { _id: user_id },
+            { _id: approval._id },
             { $set: updateData }
         );
 

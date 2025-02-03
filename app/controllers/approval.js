@@ -1,24 +1,26 @@
 const Approval = require('../database/models/Approval');
 const mongoose = require('mongoose');
 
-exports.createApproval = async (title, model, user_id, orginalData, comment) => {
+exports.createApproval = async (title, model, user_id, field_id, draft, comment) => {
     try {
         const Model = mongoose.model(model);
 
+        delete draft._id
         const approval = await Approval.findOneAndUpdate(
-            { model, user_id },
+            { model, field_id },
             {
-                ...orginalData,
-                approval_title: title,
-                approval_comment: comment,
-                approval_status: "pending"
+                user_id,
+                title,
+                field_id,
+                model,
+                comment,
+                status: "pending",
+                draft,
             },
             { new: true, upsert: true }
         );
-
-
         await Model.updateOne(
-            { _id: orginalData._id },
+            { _id: field_id },
             {
                 $set: {
                     'approval_id': approval._id,
@@ -27,7 +29,7 @@ exports.createApproval = async (title, model, user_id, orginalData, comment) => 
         );
         return approval;
     } catch (error) {
-        console.error("Error processing approval:", error);
+        console.error("Error Create approval:", error);
         throw error;
     }
 };
@@ -60,15 +62,14 @@ exports.acceptApproval = async (req, res, next) => {
             return res.status(404).send({ message: "Approval not found" });
         }
 
-        const { model } = approval;
+        const { model, field_id, draft } = approval;
         const Model = mongoose.model(model);
 
-        approval.approval_id = null;
         if (approval.status)
-            approval.status = "live";
+            approval.draft.status = "live";
 
 
-        const updateResult = await Model.updateMany({ _id: approval._id }, { $set: approval });
+        const updateResult = await Model.updateMany({ _id: field_id }, { $set: draft });
 
         if (updateResult.modifiedCount === 0) {
             return res.status(404).send({ message: "Approval ID not found in target model" });
@@ -94,7 +95,7 @@ exports.rejectApproval = async (req, res, next) => {
 
         const approval = await Approval.findOneAndUpdate(
             { _id: approval_id },
-            { approval_status: "rejected", approval_comment: comment },
+            { status: "rejected", comment: comment },
             { new: true }
         );
 
