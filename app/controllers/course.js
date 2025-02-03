@@ -3,7 +3,6 @@ const Category = require("../database/models/Category");
 const FileManager = require('../class/filemanager');
 const fileManager = FileManager.getInstance();
 const { createApproval } = require('../controllers/approval');
-const Approval = require('../database/models/Approval');
 
 exports.addCourse = async (req, res, next) => {
     try {
@@ -24,7 +23,7 @@ exports.addCourse = async (req, res, next) => {
             uploaderId: user_id,
             originalName: originalname,
             mimeType: mimetype,
-            isPrivate: true,
+            isPrivate: false,
             folderPath: JSON.stringify(["", "users", user_id, courseName]),
         });
 
@@ -46,8 +45,7 @@ exports.addCourse = async (req, res, next) => {
             }
         });
 
-
-        const approval = await createApproval("ثبت اطلاعات دوره", "Course", user_id, newCourse);
+        const approval = await createApproval("ثبت اطلاعات دوره", "Course", user_id, newCourse.toObject());
 
         if (!newCourse) {
             throw { message: 'Course create failed', statusCode: 400 }
@@ -63,40 +61,96 @@ exports.addCourse = async (req, res, next) => {
 
 exports.editCourse = async (req, res, next) => {
     try {
-        const { course_id, courseName, description, category_id, level, metadata } = await req.body;
-
-        const updatedCourse = await Course.findByIdAndUpdate(course_id, { courseName, description, category_id, level, metadata });
-        if (!updatedCourse) {
-            throw new Error("Course not found");
+        const { course_id } = req.params; // Get course_id from the request parameters
+        const { courseName, description, level, category_id } = req.body;
+        const { file, user: { _id: user_id } } = req;
+        
+        // Check if the course exists
+        const existingCourse = await Course.findById(course_id);
+        if (!existingCourse) {
+            return res.status(404).json({ message: 'Course not found' });
         }
-        res.json({ message: "Course Updated" });
-    } catch (error) {
-        console.error("Error updating course:", error);
-        throw new Error("Failed to update course");
+
+        // Set category_id if it's not provided (use the first category in the database)
+        const updatedCategoryId = category_id || (await Category.find({}))[0]._id;
+
+        // Prepare file upload logic if a new file is provided
+        let imageData = existingCourse.image;
+        if (file) {
+            const { buffer, originalname, mimetype } = file;
+
+            // Save new file and get its URL
+            const uploadedFile = await fileManager.saveFile(buffer, {
+                uploaderId: user_id,
+                originalName: originalname,
+                mimeType: mimetype,
+                isPrivate: false,
+                folderPath: JSON.stringify(["", "users", user_id, courseName]),
+            });
+
+            const fileUrl = await fileManager.getPublicFileUrl(uploadedFile[0]._id);
+            const filePath = await fileManager.getFilePath(uploadedFile[0]._id, user_id, false);
+            const blurHash = "s"; // Replace with getBase64(filePath) if needed
+
+            // Update the image data
+            imageData = {
+                url: fileUrl,
+                blurHash
+            };
+        }
+
+        // Update the course with the new details
+        const updatedCourse = await Course.findByIdAndUpdate(
+            course_id,
+            {
+                courseName,
+                description,
+                level,
+                category_id: updatedCategoryId,
+                image: imageData,
+            },
+            { new: true } // To return the updated course
+        );
+
+        // Create approval for the course update (if necessary)
+        await createApproval("ویرایش اطلاعات دوره", "Course", user_id, updatedCourse.toObject());
+
+        res.json({ message: "Course updated", course_id: updatedCourse._id });
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 422).json(err);
     }
 };
 
 
-exports.getCourse = async (req, res, next) => {
+exports.courseList = async (req, res, next) => {
     try {
-        const { course_id } = await req.body;
+        const { page, perPage } = req.body;
 
-        const course = await Course.findById(course_id)
+        const courses = await Course.find({ teacher_id: req.user._id })
             .populate("teacher_id")
             .populate("category_id")
+            .populate("approval_id")
             .populate({
                 path: "courseMaterials.file_id",
                 model: "File",
             })
-            .populate("students");
+            .populate("students")
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean();
 
-        if (!course) {
-            throw new Error("Course not found");
-        }
+        let finalCourses = courses.map(course => {
+            if (course.approval_id) {
+                return course.approval_id;
+            }
+            return course;
+        });
 
-        res.json({ course });
+        const courseCount = await Course.countDocuments({ teacher_id: req.user._id });
 
-    } catch (error) {
-        console.log("Error in Change Avatar : " + error);
+        res.send({ courseCount, courses: finalCourses });
+    } catch (err) {
+        res.status(err.statusCode || 422).json(err.errors || err.message);
     }
 };

@@ -16,8 +16,8 @@ const CourseSchema = buildSchema({
     status: {
         type: String,
         required: true,
-        enum: ['active', 'inactive', 'completed'],
-        default: 'inactive'
+        enum: ['rejected', 'pending', 'live'],
+        default: 'pending'
     },
     level: { type: String, required: true },
     image: { url: String, blurHash: String },

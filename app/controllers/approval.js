@@ -5,10 +5,14 @@ exports.createApproval = async (title, model, user_id, orginalData, comment) => 
     try {
         const Model = mongoose.model(model);
 
-
         const approval = await Approval.findOneAndUpdate(
             { model, user_id },
-            { ...orginalData, title, comment, status: "pending" },
+            {
+                ...orginalData,
+                approval_title: title,
+                approval_comment: comment,
+                approval_status: "pending"
+            },
             { new: true, upsert: true }
         );
 
@@ -61,7 +65,7 @@ exports.acceptApproval = async (req, res, next) => {
 
         approval.approval_id = null;
         if (approval.status)
-            approval.status = "active";
+            approval.status = "live";
 
 
         const updateResult = await Model.updateMany({ _id: approval._id }, { $set: approval });
@@ -90,7 +94,7 @@ exports.rejectApproval = async (req, res, next) => {
 
         const approval = await Approval.findOneAndUpdate(
             { _id: approval_id },
-            { status: "rejected", comment },
+            { approval_status: "rejected", approval_comment: comment },
             { new: true }
         );
 
