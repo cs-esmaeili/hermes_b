@@ -357,6 +357,53 @@ class FileManager {
         });
     }
 
+    async toggleFilePrivacy(fileId, userId, userIsAdmin = false) {
+        this.#checkInitialized();
+
+        const file = await this.File.findById(fileId);
+        if (!file) {
+            throw new Error('File not found');
+        }
+
+        if (file.isPrivate && !userIsAdmin) {
+            await this.checkFileAccess(userId, fileId, 'write');
+        }
+
+        const oldBaseDir = file.isPrivate ? this.privateBaseDir : this.publicBaseDir;
+        const newBaseDir = file.isPrivate ? this.publicBaseDir : this.privateBaseDir;
+
+        const oldFilePath = path.join(oldBaseDir, ...file.storagePath, file.hostName);
+        const newFilePath = path.join(newBaseDir, ...file.storagePath, file.hostName);
+
+        await fs.mkdir(path.join(newBaseDir, ...file.storagePath), { recursive: true });
+
+        await transaction(async (session) => {
+            await fs.rename(oldFilePath, newFilePath);
+
+            file.isPrivate = !file.isPrivate;
+            await file.save();
+
+            if (file.isPrivate) {
+                const fileAccess = await this.FileAccess.findOne({ file_id: fileId });
+                if (!fileAccess) {
+                    await this.FileAccess.create([{
+                        file_id: fileId,
+                        accessList: [{ userId: file.uploader_id, accessLevel: "write" }]
+                    }]);
+                } else {
+                    const hasAccess = fileAccess.accessList.some(access => access.userId.toString() === file.uploader_id.toString());
+                    if (!hasAccess) {
+                        fileAccess.accessList.push({ userId: file.uploader_id, accessLevel: "write" });
+                        await fileAccess.save();
+                    }
+                }
+            } else {
+                await this.FileAccess.deleteOne({ file_id: fileId });
+            }
+        });
+
+        return file;
+    }
 
 }
 

@@ -251,3 +251,38 @@ exports.deleteTopic = async (req, res) => {
         res.status(500).json({ message: "An error occurred", error: err.message });
     }
 };
+
+
+exports.editTopic = async (req, res) => {
+    try {
+        const { course_id, file_id, title, order, changeVisibility } = req.body;
+
+        if (!course_id || !file_id) {
+            return res.status(400).json({ message: "Course ID and File ID are required" });
+        }
+
+        const course = await Course.findOneAndUpdate(
+            { _id: course_id, "courseMaterials.file_id": file_id },
+            {
+                $set: {
+                    "courseMaterials.$.title": title,
+                    "courseMaterials.$.order": order
+                }
+            },
+            { new: true }
+        );
+
+        if (changeVisibility) {
+            fileManager.toggleFilePrivacy(file_id, req.user._id);
+        }
+
+        if (!course) {
+            return res.status(404).json({ message: "Course or file not found" });
+        }
+
+        res.json({ message: "Course material updated successfully", course });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "An error occurred", error: err.message });
+    }
+};

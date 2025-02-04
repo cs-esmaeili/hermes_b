@@ -10,5 +10,6 @@ router.post("/courseList", course.courseList);
 router.post("/courseInformation", course.courseInformation);
 router.post("/addTopic", course.addTopic);
 router.post("/deleteTopic", course.deleteTopic);
+router.post("/editTopic", course.editTopic);
 
 module.exports = router;
