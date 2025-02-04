@@ -209,7 +209,7 @@ exports.addTopic = async (req, res, next) => {
         let oldCourseMaterials = course.courseMaterials;
         oldCourseMaterials.push({ title, order, file_id: uplodedFile[0]._id });
 
-        
+
         let newCourse = await Course.updateOne(
             { _id: course_id },
             { courseMaterials: oldCourseMaterials }
@@ -225,3 +225,29 @@ exports.addTopic = async (req, res, next) => {
         res.status(err.statusCode || 422).json(err);
     }
 }
+
+exports.deleteTopic = async (req, res) => {
+    try {
+        const { course_id, file_id } = req.body;
+
+        if (!course_id || !file_id) {
+            return res.status(400).json({ message: "Course ID and File ID are required" });
+        }
+
+        const course = await Course.findByIdAndUpdate(
+            course_id,
+            { $pull: { courseMaterials: { file_id } } },
+            { new: true }
+        );
+        fileManager.deleteFile(file_id, req.user._id);
+
+        if (!course) {
+            return res.status(404).json({ message: "Course not found" });
+        }
+
+        res.json({ message: "Course material deleted successfully", course });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "An error occurred", error: err.message });
+    }
+};
