@@ -6,8 +6,8 @@ exports.createApproval = async (title, model, user_id, field_id, draft, comment)
     try {
         const Model = mongoose.model(model);
 
-        delete draft._id;
-        delete draft.approval_id;
+        if (draft)
+            delete draft.approval_id;
 
         let approval = await Approval.findOne({ model, field_id });
 
@@ -84,9 +84,7 @@ exports.acceptApproval = async (req, res, next) => {
         const { model, field_id, draft } = approval;
         const Model = mongoose.model(model);
 
-        if (approval.status)
-            approval.draft.status = "live";
-
+        draft.status = "live";
 
         const updateResult = await Model.updateMany({ _id: field_id }, { $set: draft });
 

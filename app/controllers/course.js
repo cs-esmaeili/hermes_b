@@ -3,6 +3,7 @@ const Category = require("../database/models/Category");
 const FileManager = require('../class/filemanager');
 const fileManager = FileManager.getInstance();
 const { createApproval } = require('../controllers/approval');
+const Approval = require("../database/models/Approval");
 
 exports.addCourse = async (req, res, next) => {
     try {
@@ -44,14 +45,13 @@ exports.addCourse = async (req, res, next) => {
                 blurHash
             }
         });
-        newCourse = newCourse.toObject();
+        const forApproval = newCourse.toObject();
 
-        const approval = await createApproval("ثبت اطلاعات دوره", "Course", user_id, newCourse._id, newCourse);
+        const approval = await createApproval("ثبت اطلاعات دوره", "Course", user_id, forApproval._id, forApproval);
 
         if (!newCourse) {
             throw { message: 'Course create failed', statusCode: 400 }
         }
-
 
         res.json({ message: "Course Created", course_id: newCourse._id });
     } catch (err) {
@@ -69,6 +69,8 @@ exports.editCourse = async (req, res, next) => {
         category_id = (await Category.find({}))[0]._id;
 
         const { file, user: { _id: user_id } } = await req;
+
+        console.log({ course_id, courseName, description, level });
 
 
         const existingCourse = await Course.findById(course_id);
@@ -94,26 +96,27 @@ exports.editCourse = async (req, res, next) => {
 
             imageData = {
                 url: fileUrl,
-                blurHash
+                blurHash: "s"
             };
         }
 
-        let updatedCourse = await Course.findByIdAndUpdate(
-            course_id,
+        const approval = await createApproval("ویرایش اطلاعات دوره", "Course", user_id, course_id, null);
+
+        await Approval.updateOne(
+            { _id: approval._id },
             {
-                courseName,
-                description,
-                level,
-                category_id,
-                image: imageData,
-            },
-            { new: true }
+                $set: {
+                    'draft.courseName': courseName,
+                    'draft.description': description,
+                    'draft.level': level,
+                    'draft.category_id': category_id,
+                    'draft.image': imageData,
+                }
+            }
         );
-        updatedCourse = updatedCourse.toObject();
 
-        await createApproval("ویرایش اطلاعات دوره", "Course", user_id, updatedCourse._id, updatedCourse);
 
-        res.json({ message: "Course updated", course_id: updatedCourse._id });
+        res.json({ message: "Course updated", course_id });
     } catch (err) {
         console.log(err);
         res.status(err.statusCode || 422).json(err);
@@ -173,6 +176,7 @@ exports.courseInformation = async (req, res, next) => {
         if (course?.approval_id) {
             finalCourse = course.approval_id.draft;
         }
+
 
         res.send({
             course: finalCourse
