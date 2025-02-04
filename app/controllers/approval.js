@@ -1,38 +1,57 @@
 const Approval = require('../database/models/Approval');
 const mongoose = require('mongoose');
+const { currentTime } = require("../utils/TimeConverter");
 
 exports.createApproval = async (title, model, user_id, field_id, draft, comment) => {
     try {
         const Model = mongoose.model(model);
 
-        delete draft._id
-        const approval = await Approval.findOneAndUpdate(
-            { model, field_id },
-            {
-                user_id,
-                title,
-                field_id,
+        delete draft._id;
+        delete draft.approval_id;
+
+        let approval = await Approval.findOne({ model, field_id });
+
+        if (!approval) {
+            approval = await Approval.create({
                 model,
-                comment,
-                status: "pending",
-                draft,
-            },
-            { new: true, upsert: true }
-        );
+                field_id,
+                user_id,
+                draft: {
+                    ...draft,
+                    approval: { title, comment, status: "pending", approval_time: currentTime() }
+                }
+            });
+        } else {
+            await Approval.updateOne(
+                { model, field_id },
+                {
+                    $set: {
+                        "draft.approval.title": title,
+                        "draft.approval.comment": comment,
+                        "draft.approval.status": "pending",
+                        "draft.approval.approval_time": currentTime(),
+                    }
+                }
+            );
+        }
+
         await Model.updateOne(
             { _id: field_id },
             {
                 $set: {
-                    'approval_id': approval._id,
+                    approval_id: approval._id,
+                    status: "pending"
                 }
             }
         );
+
         return approval;
     } catch (error) {
         console.error("Error Create approval:", error);
         throw error;
     }
 };
+
 
 
 exports.getApprovals = async (req, res, next) => {
@@ -95,7 +114,7 @@ exports.rejectApproval = async (req, res, next) => {
 
         const approval = await Approval.findOneAndUpdate(
             { _id: approval_id },
-            { status: "rejected", comment: comment },
+            { $set: { "draft.approval.status": "rejected", "draft.approval.comment": comment } },
             { new: true }
         );
 

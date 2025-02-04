@@ -33,7 +33,7 @@ exports.addCourse = async (req, res, next) => {
         const blurHash = "s";//await getBase64(filePath);
 
 
-        const newCourse = await Course.create({
+        let newCourse = await Course.create({
             teacher_id: user_id,
             courseName,
             description,
@@ -44,14 +44,15 @@ exports.addCourse = async (req, res, next) => {
                 blurHash
             }
         });
+        newCourse = newCourse.toObject();
 
-        const approval = await createApproval("ثبت اطلاعات دوره", "Course", user_id, newCourse.toObject());
+        const approval = await createApproval("ثبت اطلاعات دوره", "Course", user_id, newCourse._id, newCourse);
 
         if (!newCourse) {
             throw { message: 'Course create failed', statusCode: 400 }
         }
 
-        
+
         res.json({ message: "Course Created", course_id: newCourse._id });
     } catch (err) {
         console.log(err);
@@ -97,7 +98,7 @@ exports.editCourse = async (req, res, next) => {
             };
         }
 
-        const updatedCourse = await Course.findByIdAndUpdate(
+        let updatedCourse = await Course.findByIdAndUpdate(
             course_id,
             {
                 courseName,
@@ -108,8 +109,9 @@ exports.editCourse = async (req, res, next) => {
             },
             { new: true }
         );
+        updatedCourse = updatedCourse.toObject();
 
-        await createApproval("ویرایش اطلاعات دوره", "Course", user_id, updatedCourse.toObject());
+        await createApproval("ویرایش اطلاعات دوره", "Course", user_id, updatedCourse._id, updatedCourse);
 
         res.json({ message: "Course updated", course_id: updatedCourse._id });
     } catch (err) {
@@ -138,7 +140,7 @@ exports.courseList = async (req, res, next) => {
 
         let finalCourses = courses.map(course => {
             if (course.approval_id) {
-                return course.approval_id;
+                return course.approval_id.draft;
             }
             return course;
         });
@@ -169,7 +171,7 @@ exports.courseInformation = async (req, res, next) => {
 
         let finalCourse = course;
         if (course?.approval_id) {
-            finalCourse = course.approval_id;
+            finalCourse = course.approval_id.draft;
         }
 
         res.send({
