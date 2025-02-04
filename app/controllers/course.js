@@ -185,3 +185,43 @@ exports.courseInformation = async (req, res, next) => {
         console.log(err);
     }
 }
+
+exports.addTopic = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file provided' });
+        }
+
+        const { course_id, title, order, isPrivate } = await req.body;
+        const { file: { buffer, originalname, mimetype }, user: { _id: user_id } } = await req;
+
+        const course = await Course.findById(course_id);
+
+        const uplodedFile = await fileManager.saveFile(buffer, {
+            uploaderId: user_id,
+            originalName: originalname,
+            mimeType: mimetype,
+            isPrivate: isPrivate === 'true' || isPrivate === true,
+            folderPath: JSON.stringify(["", "users", user_id, course.courseName]),
+        });
+
+
+        let oldCourseMaterials = course.courseMaterials;
+        oldCourseMaterials.push({ title, order, file_id: uplodedFile[0]._id });
+
+        
+        let newCourse = await Course.updateOne(
+            { _id: course_id },
+            { courseMaterials: oldCourseMaterials }
+        );
+
+        if (!newCourse) {
+            throw { message: 'Topic create failed', statusCode: 400 }
+        }
+
+        res.json({ message: "Topic Created", course_id: newCourse._id });
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 422).json(err);
+    }
+}

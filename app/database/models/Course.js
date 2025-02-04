@@ -8,8 +8,8 @@ const CourseSchema = buildSchema({
     description: { type: String, required: true },
     approval_id: { type: mongoose.ObjectId, ref: 'Approval', required: false, default: null },
     courseMaterials: [{
-        title: { type: String, required: true },
         file_id: { type: mongoose.ObjectId, ref: 'File', required: true },
+        title: { type: String, required: true },
         order: { type: Number, required: true },
     }],
     students: [{ type: mongoose.ObjectId, ref: 'User' }],

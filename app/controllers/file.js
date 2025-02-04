@@ -1,6 +1,6 @@
-const { error } = require('console');
 const FileManager = require('../class/filemanager');
-const { checkUserAccess, getUserFromToken } = require("../utils/user")
+const { checkUserAccess, getUserFromToken } = require("../utils/user");
+const File = require("../database/models/File");
 
 const fileManager = FileManager.getInstance();
 
@@ -135,14 +135,14 @@ exports.renameFolder = async (req, res, next) => {
 exports.downloadFile = async (req, res, next) => {
     try {
         const { file_id, token } = req.params;
+        const file = await File.findById(file_id);
 
-        if (token) {
-            const check = await checkUserAccess(token, "/file/listFiles");
+        if (token && file?.isPrivate) {
+            const check = await checkUserAccess(token, "/dashboard/filemanager");
             const user = await getUserFromToken(token);
             const file = await fileManager.getFilePath(file_id, user._id, check);
             res.sendFile(file);
         } else {
-            //public
             const file = await fileManager.getFilePath(file_id, null, false);
             res.sendFile(file);
         }

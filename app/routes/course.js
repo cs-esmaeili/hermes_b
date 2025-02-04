@@ -8,5 +8,6 @@ router.post("/addCourse", course.addCourse);
 router.post("/editCourse", course.editCourse);
 router.post("/courseList", course.courseList);
 router.post("/courseInformation", course.courseInformation);
+router.post("/addTopic", course.addTopic);
 
 module.exports = router;
