@@ -43,9 +43,9 @@ exports.userInformation = async (req, res, next) => {
 
         let finalUser = user;
         if (user.approval_id) {
-            finalUser = user.approval_id.draft;
+            finalUser = user.approval_id.User;
         }
-
+        
         res.send({
             permissions,
             information: finalUser
@@ -79,9 +79,7 @@ exports.changeAvatar = async (req, res, next) => {
             return res.status(400).json({ message: 'No file provided' });
         }
 
-        let { user_id = req.user._id } = req.body;
-
-
+        let { user_id = req.user._id } = req.body
 
         const file = await fileManager.saveFile(req.file.buffer, {
             uploaderId: user_id,
@@ -105,12 +103,13 @@ exports.changeAvatar = async (req, res, next) => {
             { _id: approval._id },
             {
                 $set: {
-                    'draft.data.image': {
+                    'User.data.image': {
                         url: fileUrl,
                         blurHash
                     }
                 }
-            }
+            },
+            { new: true }
         );
 
         res.status(201).json({
@@ -139,33 +138,33 @@ exports.updateUserData = async (req, res, next) => {
             user_id = req.user._id;
         }
         const updateData = {
-            'draft.data.address': address,
-            'draft.data.fullName': fullName,
-            'draft.data.nationalCode': nationalCode,
-            'draft.data.birthday': birthday,
-            'draft.data.shebaNumber': shebaNumber,
-            'draft.data.cardNumber': cardNumber,
-            'draft.data.fatherName': fatherName,
-            'draft.data.companyName': companyName,
-            'draft.data.economicCode': economicCode,
-            'draft.data.registrationNumber': registrationNumber,
-            'draft.data.postalCode': postalCode,
-            'draft.data.ostan': ostan,
-            'draft.data.shahr': shahr,
-            'draft.data.biography': biography,
-            'draft.data.github': github,
-            'draft.data.linkedin': linkedin,
-            'draft.data.telegram': telegram,
-            'draft.data.instagram': instagram,
-            'draft.data.twitter': twitter,
-            'draft.role_id': role_id,
-            'draft.email': email,
-            'draft.userName': userName,
+            'User.data.address': address,
+            'User.data.fullName': fullName,
+            'User.data.nationalCode': nationalCode,
+            'User.data.birthday': birthday,
+            'User.data.shebaNumber': shebaNumber,
+            'User.data.cardNumber': cardNumber,
+            'User.data.fatherName': fatherName,
+            'User.data.companyName': companyName,
+            'User.data.economicCode': economicCode,
+            'User.data.registrationNumber': registrationNumber,
+            'User.data.postalCode': postalCode,
+            'User.data.ostan': ostan,
+            'User.data.shahr': shahr,
+            'User.data.biography': biography,
+            'User.data.github': github,
+            'User.data.linkedin': linkedin,
+            'User.data.telegram': telegram,
+            'User.data.instagram': instagram,
+            'User.data.twitter': twitter,
+            'User.role_id': role_id,
+            'User.email': email,
+            'User.userName': userName,
         };
 
         if (password) {
             const hashPassword = await createHash(password);
-            updateData['draft.password'] = hashPassword;
+            updateData['User.password'] = hashPassword;
         }
 
         let orginalUser = await User.findOne({ _id: user_id }).lean();
