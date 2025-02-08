@@ -73,7 +73,7 @@ exports.editCourse = async (req, res, next) => {
         console.log({ course_id, courseName, description, level });
 
 
-        const existingCourse = await Course.findById(course_id);
+        const existingCourse = await Course.findById(course_id).lean();
         if (!existingCourse) {
             return res.status(404).json({ message: 'Course not found' });
         }
@@ -99,18 +99,17 @@ exports.editCourse = async (req, res, next) => {
                 blurHash: "s"
             };
         }
-
-        const approval = await createApproval("ویرایش اطلاعات دوره", "Course", user_id, course_id, null);
+        const approval = await createApproval("ویرایش اطلاعات دوره", "Course", user_id, course_id, existingCourse);
 
         await Approval.updateOne(
             { _id: approval._id },
             {
                 $set: {
-                    'draft.courseName': courseName,
-                    'draft.description': description,
-                    'draft.level': level,
-                    'draft.category_id': category_id,
-                    'draft.image': imageData,
+                    'Course.courseName': courseName,
+                    'Course.description': description,
+                    'Course.level': level,
+                    'Course.category_id': category_id,
+                    'Course.image': imageData,
                 }
             }
         );
@@ -118,7 +117,7 @@ exports.editCourse = async (req, res, next) => {
 
         res.json({ message: "Course updated", course_id });
     } catch (err) {
-        console.log(err);
+        console.log("error in edit Course " + err);
         res.status(err.statusCode || 422).json(err);
     }
 };
@@ -143,7 +142,7 @@ exports.courseList = async (req, res, next) => {
 
         let finalCourses = courses.map(course => {
             if (course.approval_id) {
-                return course.approval_id.draft;
+                return course.approval_id.Course;
             }
             return course;
         });
@@ -174,7 +173,7 @@ exports.courseInformation = async (req, res, next) => {
 
         let finalCourse = course;
         if (course?.approval_id) {
-            finalCourse = course.approval_id.draft;
+            finalCourse = course.approval_id.Course;
         }
 
 
@@ -210,16 +209,22 @@ exports.addTopic = async (req, res, next) => {
         oldCourseMaterials.push({ title, order, file_id: uplodedFile[0]._id });
 
 
-        let newCourse = await Course.updateOne(
-            { _id: course_id },
-            { courseMaterials: oldCourseMaterials }
-        );
+        const existingCourse = await Course.findById(course_id).lean();
+        const approval = await createApproval("افزوده شدن سرفصل", "Course", user_id, course_id, existingCourse);
 
-        if (!newCourse) {
+        await Approval.updateOne(
+            { _id: approval._id },
+            {
+                $set: {
+                    'Course.courseMaterials': oldCourseMaterials,
+                }
+            }
+        );
+        if (!Approval) {
             throw { message: 'Topic create failed', statusCode: 400 }
         }
 
-        res.json({ message: "Topic Created", course_id: newCourse._id });
+        res.json({ message: "Topic Created", course_id });
     } catch (err) {
         console.log(err);
         res.status(err.statusCode || 422).json(err);
@@ -261,26 +266,30 @@ exports.editTopic = async (req, res) => {
             return res.status(400).json({ message: "Course ID and File ID are required" });
         }
 
-        const course = await Course.findOneAndUpdate(
-            { _id: course_id, "courseMaterials.file_id": file_id },
+        const existingCourse = await Course.findById(course_id).lean();
+        let approval = await createApproval("تغییر سرفصل", "Course", req.user._id, course_id, existingCourse);
+
+        approval = await Approval.updateOne(
+            { _id: approval._id, "Course.courseMaterials.file_id": file_id },
             {
                 $set: {
-                    "courseMaterials.$.title": title,
-                    "courseMaterials.$.order": order
+                    "Course.courseMaterials.$.title": title,
+                    "Course.courseMaterials.$.order": order
                 }
             },
             { new: true }
         );
 
+
         if (changeVisibility) {
             fileManager.toggleFilePrivacy(file_id, req.user._id);
         }
 
-        if (!course) {
+        if (!approval) {
             return res.status(404).json({ message: "Course or file not found" });
         }
 
-        res.json({ message: "Course material updated successfully", course });
+        res.json({ message: "Course material updated successfully", course: approval.Course });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "An error occurred", error: err.message });

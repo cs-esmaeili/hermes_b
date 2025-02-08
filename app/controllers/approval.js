@@ -6,8 +6,10 @@ exports.createApproval = async (title, model, user_id, field_id, draft, comment)
     try {
         const Model = mongoose.model(model);
 
-        if (draft)
+        if (draft) {
             delete draft.approval_id;
+            draft.status = "pending";
+        }
 
         let approval = await Approval.findOne({ model, field_id });
 
