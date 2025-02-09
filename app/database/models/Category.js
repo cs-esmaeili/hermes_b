@@ -1,14 +1,17 @@
 const mongoose = require("mongoose");
 const { buildSchema } = require("./builder");
 
-module.exports = mongoose.model("Category", buildSchema({
+const CategorySchema = buildSchema({
     name: {
         type: String,
         required: true,
         unique: true
     },
-    image: {
-        url: String,
-        blurHash: String
+    parent: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        default: null
     }
-}), 'Category');
+});
+
+module.exports = mongoose.model("Category", CategorySchema, 'Category');
