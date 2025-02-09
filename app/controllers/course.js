@@ -17,8 +17,6 @@ exports.addCourse = async (req, res, next) => {
         const { file: { buffer, originalname, mimetype }, user: { _id: user_id } } = await req;
         let { category_id } = await req.body;
 
-        category_id = (await Category.find({}))[0]._id;
-
 
         const uplodedFile = await fileManager.saveFile(buffer, {
             uploaderId: user_id,
@@ -66,11 +64,7 @@ exports.editCourse = async (req, res, next) => {
         const { course_id, courseName, description, level } = req.body;
         let { category_id } = await req.body;
 
-        category_id = (await Category.find({}))[0]._id;
-
         const { file, user: { _id: user_id } } = await req;
-
-        console.log({ course_id, courseName, description, level });
 
 
         const existingCourse = await Course.findById(course_id).lean();
@@ -130,7 +124,13 @@ exports.courseList = async (req, res, next) => {
         const courses = await Course.find({ teacher_id: req.user._id })
             .populate("teacher_id")
             .populate("category_id")
-            .populate("approval_id")
+            .populate({
+                path: "approval_id",
+                populate: {
+                    path: "Course.category_id",
+                    model: "Category",
+                },
+            })
             .populate({
                 path: "courseMaterials.file_id",
                 model: "File",
@@ -162,7 +162,13 @@ exports.courseInformation = async (req, res, next) => {
         const course = await Course.findOne({ _id: course_id })
             .populate("teacher_id")
             .populate("category_id")
-            .populate("approval_id")
+            .populate({
+                path: "approval_id",
+                populate: {
+                    path: "Course.category_id",
+                    model: "Category",
+                },
+            })
             .populate({
                 path: "courseMaterials.file_id",
                 model: "File",
@@ -226,7 +232,6 @@ exports.addTopic = async (req, res, next) => {
 
         res.json({ message: "Topic Created", course_id });
     } catch (err) {
-        console.log(err);
         res.status(err.statusCode || 422).json(err);
     }
 }
