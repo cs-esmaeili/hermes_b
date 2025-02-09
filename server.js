@@ -14,6 +14,7 @@ const course = require("./app/routes/course");
 const approval = require("./app/routes/approval");
 const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
+const ticket = require("./app/routes/ticket");
 const permission = require("./app/routes/permission");
 const { getMainPartOfUrl } = require("./app/utils/general");
 const { backUpService } = require('./app/services/backUp');
@@ -59,7 +60,7 @@ const upload = multer({ storage: storage });
 
   //SMS config
   // config();
-  
+
   //* BodyPaser
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
@@ -84,6 +85,7 @@ const upload = multer({ storage: storage });
   app.use("/approval", approval);
   app.use("/smsTemplate", smsTemplate);
   app.use("/smsHistory", smsHistory);
+  app.use("/ticket", ticket);
 
   //* 404 Page
   // app.use(require("./controllers/errorController").get404);
