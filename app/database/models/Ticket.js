@@ -8,7 +8,7 @@ const CommentSchema = buildSchema(
             type: String,
             required: true,
         },
-        user_id: {
+        from: {
             type: Schema.Types.ObjectId,
             ref: 'User',
             required: true,
@@ -25,13 +25,23 @@ const TicketSchema = buildSchema(
         },
         status: {
             type: String,
-            enum: ['open', 'pending', 'closed'],
-            default: 'open'
+            enum: ['pending', 'answer', 'closed'],
+            default: 'pending'
         },
         priority: {
             type: String,
             enum: ['low', 'medium', 'high'],
             default: 'medium'
+        },
+        from: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        to: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: false,
         },
         comments: [
             {
@@ -42,4 +52,4 @@ const TicketSchema = buildSchema(
     { timestamps: true }
 );
 
-module.exports = mongoose.model('Ticket', TicketSchema);
+module.exports = mongoose.model('Ticket', TicketSchema, 'Ticket');

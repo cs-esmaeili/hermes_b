@@ -2,15 +2,17 @@ const Ticket = require('../database/models/Ticket');
 
 exports.createTicket = async (req, res, next) => {
     try {
-        const { subject, comment, priority } = req.body;
+        const { subject, comment, priority, to = null } = req.body;
 
         const newTicket = new Ticket({
             subject,
             priority: priority || 'medium',
+            from: req.user._id,
+            to,
             comments: [
                 {
                     comment,
-                    user_id: req.user._id,
+                    from: req.user._id,
                 },
             ],
         });
@@ -26,17 +28,46 @@ exports.createTicket = async (req, res, next) => {
     }
 };
 
-/**
- * دریافت یک تیکت بر اساس شناسه
- * فرض بر این است که شناسه تیکت از طریق req.params.ticketId ارسال می‌شود.
- */
-exports.getTicketById = async (req, res, next) => {
+
+exports.adminGetTicketById = async (req, res, next) => {
     try {
-        const ticketId = req.params.ticketId;
-        const ticket = await Ticket.findById(ticketId);
+
+        const { ticket_id } = req.body;
+
+        const ticket = await Ticket.findOne({ _id: ticket_id })
+            .populate('from')
+            .populate('comments.from');
 
         if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
+            return res.status(404).json({ message: 'تیکت مورد نظر یافت نشد.' });
+        }
+
+        if (ticket.comments && Array.isArray(ticket.comments)) {
+            ticket.comments = ticket.comments.reverse();
+        }
+
+
+
+        return res.status(200).json(ticket);
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getTicketById = async (req, res, next) => {
+    try {
+        const { ticket_id } = req.body;
+
+        const ticket = await Ticket.findOne({ _id: ticket_id, from: req.user._id })
+            .populate('from')
+            .populate('comments.from');
+
+        if (!ticket) {
+            return res.status(404).json({ message: 'تیکت مورد نظر یافت نشد.' });
+        }
+
+        if (ticket.comments && Array.isArray(ticket.comments)) {
+            ticket.comments = ticket.comments.reverse();
         }
 
         return res.status(200).json(ticket);
@@ -45,51 +76,122 @@ exports.getTicketById = async (req, res, next) => {
     }
 };
 
-/**
- * به‌روزرسانی تیکت (مثلاً تغییر وضعیت، اولویت یا عنوان)
- * فرض بر این است که شناسه تیکت از طریق req.params.ticketId ارسال شده و فیلدهای به‌روزرسانی در req.body موجود است.
- */
-exports.updateTicket = async (req, res, next) => {
+exports.getTickets = async (req, res, next) => {
     try {
-        const ticketId = req.params.ticketId;
-        const updateData = req.body;
+        const { page, perPage } = req.body;
 
-        const updatedTicket = await Ticket.findByIdAndUpdate(ticketId, updateData, { new: true });
+        let tickets = await Ticket.find({ from: req.user._id })
+            .sort({ createdAt: -1 })
+            .populate({
+                path: 'from',
+                populate: { path: 'role_id' }
+            })
+            .populate({
+                path: 'comments.from',
+                populate: { path: 'role_id' }
+            })
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean();
 
-        if (!updatedTicket) {
-            return res.status(404).json({ message: 'Ticket not found' });
+        tickets = tickets.map(ticket => {
+            if (ticket.comments && Array.isArray(ticket.comments)) {
+                ticket.comments = ticket.comments.reverse();
+            }
+            return ticket;
+        });
+
+        const ticketsCount = await Ticket.countDocuments({});
+        res.send({ ticketsCount, tickets });
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 422).json(err.errors || err.message);
+    }
+};
+
+
+exports.adminGetTickets = async (req, res, next) => {
+    try {
+        const { page, perPage } = req.body;
+
+        let tickets = await Ticket.find({})
+            .sort({ createdAt: -1 })
+            .populate({
+                path: 'from',
+                populate: { path: 'role_id' }
+            })
+            .populate({
+                path: 'comments.from',
+                populate: { path: 'role_id' }
+            })
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean();
+
+
+        tickets = tickets.map(ticket => {
+            if (ticket.comments && Array.isArray(ticket.comments)) {
+                ticket.comments = ticket.comments.reverse();
+            }
+            return ticket;
+        });
+
+        const ticketsCount = await Ticket.countDocuments({});
+        res.send({ ticketsCount, tickets });
+    } catch (err) {
+        console.log(err);
+        res.status(err.statusCode || 422).json(err.errors || err.message);
+    }
+};
+
+
+exports.adminUpdateTicket = async (req, res, next) => {
+    try {
+        const { ticket_id, comment, status } = req.body;
+
+        const ticket = await Ticket.findById(ticket_id);
+        if (!ticket) {
+            return res.status(404).json({ message: "تیکت مورد نظر یافت نشد." });
         }
 
+        if (comment) {
+            ticket.comments.push({ comment, from: req.user._id });
+        }
+
+        if (status) {
+            ticket.status = status;
+        }
+
+        await ticket.save();
+
         return res.status(200).json({
-            message: 'Ticket updated successfully',
-            ticket: updatedTicket,
+            message: "تیکت با موفقیت به‌روزرسانی شد.",
+            ticket,
         });
     } catch (error) {
         next(error);
     }
 };
 
-/**
- * افزودن یک کامنت جدید به تیکت موجود
- * فرض بر این است که شناسه تیکت از طریق req.params.ticketId و اطلاعات کامنت (comment, createdBy) در req.body قرار دارد.
- */
-exports.addCommentToTicket = async (req, res, next) => {
+exports.updateTicket = async (req, res, next) => {
     try {
-        const ticketId = req.params.ticketId;
-        const { comment, createdBy } = req.body;
+        const { ticket_id, comment } = req.body;
 
-        const ticket = await Ticket.findById(ticketId);
+
+        const ticket = await Ticket.findOne({ _id: ticket_id, from: req.user._id, });
 
         if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
+            return res.status(404).json({ message: "تیکت مورد نظر یافت نشد." });
         }
 
-        // افزودن کامنت جدید به آرایه‌ی کامنت‌ها
-        ticket.comments.push({ comment, createdBy });
+        if (comment) {
+            ticket.comments.push({ comment, from: req.user._id, status: 'pending' });
+        }
+
         await ticket.save();
 
         return res.status(200).json({
-            message: 'Comment added successfully',
+            message: "تیکت با موفقیت به‌روزرسانی شد.",
             ticket,
         });
     } catch (error) {

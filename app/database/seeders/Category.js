@@ -5,18 +5,17 @@ const seqNumber = 4;
 
 const seed = async () => {
     try {
-        await Category.deleteMany(); // حذف دسته‌بندی‌های قبلی برای جلوگیری از داده‌های تکراری
+        await Category.deleteMany(); 
 
         const rootCategories = [];
         const allCategories = [];
 
-        // 📌 ایجاد 3 دسته‌بندی اصلی (ریشه)
+
         for (let i = 1; i <= 3; i++) {
             const rootCategory = await Category.create({ name: `Category ${i}`, parent: null });
             rootCategories.push(rootCategory);
         }
 
-        // 📌 ایجاد 3 سطح زیرمجموعه (هر سطح 3 دسته دارد)
         for (const root of rootCategories) {
             for (let j = 1; j <= 3; j++) {
                 const subCategory1 = new Category({ name: `${root.name} - Sub ${j}`, parent: root._id });
@@ -30,7 +29,7 @@ const seed = async () => {
         console.error(red("❌ خطا در اجرای Seeder:"), error);
     }
 
-    console.log(`${red(seqNumber)} : ${green("Seeder اجرا شد.")}`);
+    console.log(`${red(seqNumber)} : ${green("Category seeder done")}`);
 };
 
 module.exports = { seqNumber, seed };
