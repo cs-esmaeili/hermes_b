@@ -220,9 +220,11 @@ class FileManager {
 
         for (const file of files) {
             if (!file.isPrivate || userIsAdmin) {
-                result.push({ ...file.toObject(), type: 'file' });
+                let url = process.env.BASE_URL + 'storage' + path.sep + file.storagePath.join(path.sep) + path.sep + file.hostName;
+                url = url.replace(/\\/g, '/'); 
+                result.push({ ...file.toObject(), type: 'file', publicUrl: url });
             } else {
-                await this.checkFileAccess(userId, file._id, 'read');
+                const access = await this.checkFileAccess(userId, file._id, 'read');
                 if (access) {
                     result.push({
                         ...file.toObject(),
