@@ -27,11 +27,11 @@ const seed = async (app) => {
             auther: user._id,
             metaTags: ['haha', "kda"],
             imageH: {
-                url: process.env.BASE_URL + JSON.parse(process.env.STORAGE_LOCATION)[2] + "/1.jpg",
+                url: process.env.BASE_URL + JSON.parse(process.env.PUBLIC_DIR)[2] + "/1.jpg",
                 blurHash
             },
             imageV: {
-                url: process.env.BASE_URL + JSON.parse(process.env.STORAGE_LOCATION)[2] + "/1.jpg",
+                url: process.env.BASE_URL + JSON.parse(process.env.PUBLIC_DIR)[2] + "/1.jpg",
                 blurHash
             },
             body: [

@@ -1,6 +1,6 @@
 const path = require('path');
 const { getBase64 } = require('@plaiceholder/base64');
-const BaseFileDir = path.join(process.cwd(), ...JSON.parse(process.env.STORAGE_LOCATION));
+const BaseFileDir = path.join(process.cwd(), ...JSON.parse(process.env.PUBLIC_DIR));
 
 
 exports.getImageBlurHash = async (imagePath) => {

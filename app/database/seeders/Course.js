@@ -19,7 +19,7 @@ const seed = async (app) => {
         status: "live",
         level: "متوسط",
         image: {
-            url: process.env.BASE_URL + JSON.parse(process.env.STORAGE_LOCATION)[2] + "/1.jpg",
+            url: process.env.BASE_URL + JSON.parse(process.env.PUBLIC_DIR)[2] + "/1.jpg",
         },
     });
 
