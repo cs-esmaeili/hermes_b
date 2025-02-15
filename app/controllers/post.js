@@ -5,16 +5,20 @@ const { mCreatePost, mDeletePost, mUpdatePost } = require('../static/response.js
 exports.createPost = async (req, res, next) => {
     try {
         const { title, disc, category_id, body, metaTags, imageH, imageV } = req.body;
+
+        console.log({ title, disc, category_id, body, metaTags, imageH, imageV });
+
+
         const result = await Post.create({
             title,
             disc,
-            category_id: new mongoose.Types.ObjectId(category_id),
+            category_id,
             body,
             views: 0,
             metaTags,
-            imageH,
-            imageV,
-            auther: req.body.user._id,
+            imageH: { url: imageH },
+            imageV: { url: imageV },
+            auther: req.user._id,
         });
         if (result) {
             res.send({ message: mCreatePost.ok });
@@ -22,6 +26,8 @@ exports.createPost = async (req, res, next) => {
         }
         throw { message: mCreatePost.fail_1, statusCode: 500 };
     } catch (err) {
+        console.log(err);
+
         if (err.code == 11000) {
             res.status(err.statusCode || 422).json({ message: mCreatePost.fail_2 });
         } else {

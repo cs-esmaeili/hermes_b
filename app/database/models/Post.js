@@ -1,34 +1,6 @@
 const mongoose = require("mongoose");
 const { buildSchema } = require("./builder");
 
-const BlockSchema = new mongoose.Schema({
-    type: {
-        type: String,
-        required: true,
-        enum: ['Image', 'Text', 'Video'],
-    },
-    content: {
-        type: mongoose.Schema.Types.Mixed,
-        required: true,
-        validate: {
-            validator: function (value) {
-                if (this.type === 'Image') {
-                    return (
-                        typeof value === 'object' &&
-                        value.hasOwnProperty('url') &&
-                        value.hasOwnProperty('blurHash')
-                    );
-                } else if (this.type === 'Text') {
-                    return typeof value === 'string';
-                } else if (this.type === 'Video') {
-                    return typeof value === 'object' && value.hasOwnProperty('url');
-                }
-                return false;
-            },
-            message: 'Invalid content for the ${this.type}',
-        },
-    },
-});
 
 
 module.exports = mongoose.model("Post", buildSchema({
@@ -63,7 +35,10 @@ module.exports = mongoose.model("Post", buildSchema({
         default: 0,
         required: true,
     },
-    body: [BlockSchema],
+    body: {
+        type: String,
+        required: true,
+    },
     views: {
         type: Number,
         default: 0,
