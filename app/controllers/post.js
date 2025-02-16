@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
 const Post = require('../database/models/Post');
 const { mCreatePost, mDeletePost, mUpdatePost } = require('../static/response.json');
+const { userHavePermission } = require('../utils/user');
 
 exports.createPost = async (req, res, next) => {
     try {
@@ -51,7 +51,7 @@ exports.updatePost = async (req, res, next) => {
         const updateResult = await Post.updateOne({ _id: post_id }, {
             title,
             disc,
-            category_id : category_id,
+            category_id: category_id,
             body,
             metaTags,
             imageH: { url: imageH },
@@ -73,7 +73,15 @@ exports.updatePost = async (req, res, next) => {
 exports.postList = async (req, res, next) => {
     try {
         const { page, perPage } = req.body;
-        const posts = await Post.find({}).populate('category_id').populate('auther').skip((page - 1) * perPage).limit(perPage).lean();
+
+
+
+        const check = await userHavePermission(req.user._id, "post.postList.others");
+
+        let searchQuery = { auther: req.user._id, }
+        if (check) searchQuery = {}
+
+        const posts = await Post.find(searchQuery).populate('category_id').populate('auther').skip((page - 1) * perPage).limit(perPage).lean();
         for (let post of posts) {
             post.categoryName = post.category_id.name;
         }
