@@ -48,8 +48,6 @@ exports.updatePost = async (req, res, next) => {
     try {
         const { post_id, title, disc, category_id, body, metaTags, imageH, imageV } = req.body;
 
-        console.log({ post_id, title, disc, category_id, body, metaTags, imageH, imageV });
-
         const updateResult = await Post.updateOne({ _id: post_id }, {
             title,
             disc,

@@ -37,7 +37,7 @@ exports.checkUserAccess = async (token, route) => {
 
     const allPermissions = await Permission.find({ _id: { $in: permissions } });
 
-    
+
     function convertToRegex(dbRoute) {
         return new RegExp(`^${dbRoute.replace(/:[^\s/]+/g, '[^/]+')}$`);
     }
@@ -52,4 +52,26 @@ exports.checkUserAccess = async (token, route) => {
     }
 
     return true;
+};
+
+exports.userHavePermission = async (user_id, permission) => {
+    try {
+        const user = await User.findById(user_id);
+        if (!user) return false;
+
+        const role = await Role.findById(user.role_id);
+        if (!role) return false;
+
+        const permissionsIds = role.permissions;
+
+        const perm = await Permission.findOne({
+            _id: { $in: permissionsIds },
+            route: permission
+        });
+
+        return !!perm;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
 };
