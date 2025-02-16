@@ -6,9 +6,6 @@ exports.createPost = async (req, res, next) => {
     try {
         const { title, disc, category_id, body, metaTags, imageH, imageV } = req.body;
 
-        console.log({ title, disc, category_id, body, metaTags, imageH, imageV });
-
-
         const result = await Post.create({
             title,
             disc,
@@ -50,14 +47,17 @@ exports.deletePost = async (req, res, next) => {
 exports.updatePost = async (req, res, next) => {
     try {
         const { post_id, title, disc, category_id, body, metaTags, imageH, imageV } = req.body;
+
+        console.log({ post_id, title, disc, category_id, body, metaTags, imageH, imageV });
+
         const updateResult = await Post.updateOne({ _id: post_id }, {
             title,
             disc,
-            category_id: new mongoose.Types.ObjectId(category_id),
+            category_id : category_id,
             body,
             metaTags,
-            imageH,
-            imageV,
+            imageH: { url: imageH },
+            imageV: { url: imageV },
         });
         if (updateResult.modifiedCount == 1) {
             res.send({ message: mUpdatePost.ok });
@@ -65,6 +65,8 @@ exports.updatePost = async (req, res, next) => {
         }
         throw { message: mUpdatePost.fail, statusCode: 500 };
     } catch (err) {
+        console.log(err);
+
         res.status(err.statusCode || 422).json(err);
     }
 }
@@ -73,36 +75,12 @@ exports.updatePost = async (req, res, next) => {
 exports.postList = async (req, res, next) => {
     try {
         const { page, perPage } = req.body;
-        const posts = await Post.find({}).populate('category_id').skip((page - 1) * perPage).limit(perPage).lean();
+        const posts = await Post.find({}).populate('category_id').populate('auther').skip((page - 1) * perPage).limit(perPage).lean();
         for (let post of posts) {
             post.categoryName = post.category_id.name;
         }
         const postsCount = await Post.countDocuments({}).lean();
         res.send({ postsCount, posts });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err.errors || err.message);
-    }
-}
-
-exports.postSerach = async (req, res, next) => {
-    try {
-        const { search, page, perPage } = req.body;
-        let convertedSearch = search.toLowerCase().trim();
-        const posts = await Post.find({ title: { $regex: convertedSearch, $options: 'i' } })
-            .skip((page - 1) * perPage)
-            .limit(perPage);
-        const total = await Post.countDocuments({ title: { $regex: convertedSearch, $options: 'i' } });
-        res.send({ status: "ok", totalPosts: total, posts });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err.errors || err.message);
-    }
-}
-
-exports.getPost = async (req, res, next) => {
-    try {
-        const { title } = req.body;
-        const post = await Post.findOne({ title }).populate('category_id').lean();
-        res.send(post);
     } catch (err) {
         res.status(err.statusCode || 422).json(err.errors || err.message);
     }

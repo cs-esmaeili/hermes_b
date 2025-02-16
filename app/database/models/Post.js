@@ -30,10 +30,11 @@ module.exports = mongoose.model("Post", buildSchema({
         required: true,
         ref: 'Category',
     },
-    visibel: {
-        type: Boolean,
-        default: 0,
+    status: {
+        type: String,
         required: true,
+        enum: ['rejected', 'pending', 'live'],
+        default: 'pending'
     },
     body: {
         type: String,
@@ -47,5 +48,6 @@ module.exports = mongoose.model("Post", buildSchema({
     auther: {
         type: mongoose.ObjectId,
         required: true,
+        ref: 'User',
     }
 }), 'Post');
