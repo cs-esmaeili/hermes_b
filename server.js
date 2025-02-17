@@ -11,6 +11,8 @@ const role = require("./app/routes/role");
 const user = require("./app/routes/user");
 const auth = require("./app/routes/auth");
 const course = require("./app/routes/course");
+const question = require("./app/routes/question");
+const exam = require("./app/routes/exam");
 const approval = require("./app/routes/approval");
 const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
@@ -86,6 +88,8 @@ const upload = multer({ storage: storage });
   app.use("/smsTemplate", smsTemplate);
   app.use("/smsHistory", smsHistory);
   app.use("/ticket", ticket);
+  app.use("/question", question);
+  app.use("/exam", exam);
 
   //* 404 Page
   // app.use(require("./controllers/errorController").get404);

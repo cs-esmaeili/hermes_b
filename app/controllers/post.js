@@ -74,8 +74,6 @@ exports.postList = async (req, res, next) => {
     try {
         const { page, perPage } = req.body;
 
-
-
         const check = await userHavePermission(req.user._id, "post.postList.others");
 
         let searchQuery = { auther: req.user._id, }
