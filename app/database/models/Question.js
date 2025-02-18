@@ -24,8 +24,8 @@ const QuestionSchema = buildSchema({
     correctOption: {
         type: Number,
         required: true,
-        min: 0,
-        max: 3
+        min: 1,
+        max: 4
     }
 });
 

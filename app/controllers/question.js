@@ -1,6 +1,5 @@
 const Question = require("../database/models/Question");
 
-// Create a new question
 exports.createQuestion = async (req, res, next) => {
     try {
         const { exam_id, question, options, correctOption } = req.body;
@@ -21,23 +20,22 @@ exports.createQuestion = async (req, res, next) => {
     }
 };
 
-// Get all questions for a specific exam (Using POST instead of GET)
-exports.getQuestionsByExam = async (req, res, next) => {
+exports.getQuestions = async (req, res, next) => {
     try {
-        const { examId } = req.body;
+        const { page, perPage } = req.body;
 
-        const questions = await Question.find({ exam_id: examId });
 
-        res.status(200).json({
-            message: "Questions retrieved successfully",
-            questions
-        });
+        const questions = await Question.find({}).populate("exam_id").skip((page - 1) * perPage).limit(perPage).lean();
+        const questionCount = await Question.countDocuments({}).lean();
+
+        res.status(200).json({ questions, questionCount });
     } catch (error) {
         next(error);
     }
 };
 
-// Get a single question by ID (Using POST instead of GET)
+
+
 exports.getQuestionById = async (req, res, next) => {
     try {
         const { questionId } = req.body;
@@ -56,7 +54,6 @@ exports.getQuestionById = async (req, res, next) => {
     }
 };
 
-// Update a question (Using POST instead of PUT)
 exports.updateQuestion = async (req, res, next) => {
     try {
         const { questionId, question, options, correctOption } = req.body;
@@ -80,7 +77,6 @@ exports.updateQuestion = async (req, res, next) => {
     }
 };
 
-// Delete a question (Using POST instead of DELETE)
 exports.deleteQuestion = async (req, res, next) => {
     try {
         const { questionId } = req.body;
