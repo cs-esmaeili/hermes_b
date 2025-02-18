@@ -35,31 +35,12 @@ exports.getQuestions = async (req, res, next) => {
 };
 
 
-
-exports.getQuestionById = async (req, res, next) => {
-    try {
-        const { questionId } = req.body;
-
-        const question = await Question.findById(questionId);
-        if (!question) {
-            return res.status(404).json({ message: "Question not found" });
-        }
-
-        res.status(200).json({
-            message: "Question retrieved successfully",
-            question
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
 exports.updateQuestion = async (req, res, next) => {
     try {
-        const { questionId, question, options, correctOption } = req.body;
+        const { question_id, question, options, correctOption } = req.body;
 
         const updatedQuestion = await Question.findByIdAndUpdate(
-            questionId,
+            question_id,
             { question, options, correctOption },
             { new: true, runValidators: true }
         );
