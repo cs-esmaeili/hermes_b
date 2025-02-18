@@ -14,6 +14,14 @@ const ExamSchema = buildSchema({
     questionCount: {
         type: Number,
         required: true
+    },
+    attemptsLimits: {
+        type: Number,
+        default: 3
+    },
+    timeGate: {
+        type: Number,
+        default: 0
     }
 });
 

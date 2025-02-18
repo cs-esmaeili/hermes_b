@@ -14,15 +14,7 @@ const ExamRestrictionSchema = new mongoose.Schema({
     remainingAttempts: {
         type: Number,
         default: 0
-    },
-    startDate: {
-        type: Date
-    },
-    endDate: {
-        type: Date
     }
-}, {
-    timestamps: true
 });
 
 ExamRestrictionSchema.index({ user_id: 1, exam_id: 1 }, { unique: true });

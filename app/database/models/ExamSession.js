@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { buildSchema } = require("./builder");
 
 const ExamSessionSchema = buildSchema({
+    // mac-address
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -22,30 +23,23 @@ const ExamSessionSchema = buildSchema({
             answer: {
                 type: Number,
                 required: true,
-                min: 1,
+                min: 0,
                 max: 4
             }
         }
     ],
-    attemptsLimits: {
-        type: Number,
-        default: 3
-    },
-    questionCount: {
-        type: Number,
-        required: true
-    },
     status: {
         type: String,
-        enum: ["not-started", "in-progress", "completed"],
-        default: "not-started"
+        enum: ["in-progress", "completed"],
+        default: "in-progress"
     },
     score: {
         type: Number,
-        default: 0
+        default: 0,
+        min:0,
+        max:100
     }
 });
 
-// ExamSessionSchema.index({ exam_id: 1, user_id: 1 }, { unique: true });
 
 module.exports = mongoose.model("ExamSession", ExamSessionSchema, "ExamSession");

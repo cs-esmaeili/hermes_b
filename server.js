@@ -16,6 +16,7 @@ const exam = require("./app/routes/exam");
 const approval = require("./app/routes/approval");
 const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
+const examsession = require("./app/routes/examSession");
 const ticket = require("./app/routes/ticket");
 const permission = require("./app/routes/permission");
 const { getMainPartOfUrl } = require("./app/utils/general");
@@ -90,6 +91,7 @@ const upload = multer({ storage: storage });
   app.use("/ticket", ticket);
   app.use("/question", question);
   app.use("/exam", exam);
+  app.use("/examsession", examsession);
 
   //* 404 Page
   // app.use(require("./controllers/errorController").get404);
