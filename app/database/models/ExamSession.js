@@ -20,10 +20,9 @@ const ExamSessionSchema = buildSchema({
                 required: true
             },
             answer: {
-                type: Number,
-                required: true,
-                min: 0,
-                max: 4
+                type: String,
+                enum: ['1', '2', '3', '4', 'unanswered', null],
+                default: null
             }
         }
     ],
@@ -35,10 +34,9 @@ const ExamSessionSchema = buildSchema({
     score: {
         type: Number,
         default: 0,
-        min:0,
-        max:100
+        min: 0,
+        max: 100
     }
 });
-
 
 module.exports = mongoose.model("ExamSession", ExamSessionSchema, "ExamSession");

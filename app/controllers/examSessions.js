@@ -45,7 +45,6 @@ exports.startExam = async (req, res, next) => {
         // در اینجا از مقدار 0 برای answer استفاده شده که نشان‌دهنده‌ی "پاسخ داده نشده" است.
         const questionsForSession = selectedQuestions.map(q => ({
             question_id: q._id,
-            answer: 0 // مقدار اولیه؛ در هنگام پاسخ دادن، این مقدار تغییر خواهد کرد.
         }));
 
         // ایجاد یک جلسه امتحان جدید (ExamSession)
