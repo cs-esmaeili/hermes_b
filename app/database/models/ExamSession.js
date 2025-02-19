@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const { buildSchema } = require("./builder");
 
 const ExamSessionSchema = buildSchema({
-    // mac-address
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

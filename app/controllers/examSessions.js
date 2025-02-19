@@ -2,6 +2,7 @@ const ExamSession = require('../database/models/ExamSession');
 const ExamRestriction = require('../database/models/ExamRestriction');
 const Exam = require('../database/models/Exam');
 const Question = require('../database/models/Question');
+const { checkDelayTime } = require('../utils/checkTime');
 
 
 exports.startExam = async (req, res, next) => {
@@ -65,6 +66,80 @@ exports.startExam = async (req, res, next) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "خطایی رخ داده است." });
+    }
+};
+
+exports.getActiveExamSession = async (req, res, next) => {
+    try {
+        const user_id = req.user._id;
+        const { session_id } = req.body;
+
+
+        let examSession = await ExamSession.findOne(
+            {
+                _id: session_id,
+                user_id,
+                status: "in-progress"
+            })
+            .populate({ path: "exam_id" })
+            .populate({
+                path: "questions.question_id",
+                select: "-correctOption"
+            })
+            .lean();
+
+
+        const remainingTime = await checkDelayTime(examSession.createdAt, examSession.exam_id.duration, true, true);
+        
+        if (!remainingTime) {
+            return res.status(404).json({ message: "زمان امتحان تمام شده است" });
+        }
+
+        if (!examSession) {
+            return res.status(404).json({ message: "جلسه امتحان جاری یافت نشد." });
+        }
+
+        examSession.exam_id.duration = remainingTime;
+        return res.status(200).json({ examSession });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "خطایی رخ داده است." });
+    }
+};
+
+
+
+exports.updateQustionAnswer = async (req, res, next) => {
+    try {
+        // فرض بر این است که در body درخواست، sessionId، questionIndex و answer ارسال می‌شود
+        const { sessionId, questionIndex, answer } = req.body;
+
+        // اعتبارسنجی اولیه
+        if (typeof sessionId === 'undefined' || typeof questionIndex === 'undefined' || typeof answer === 'undefined') {
+            return res.status(400).json({ error: 'مقادیر sessionId، questionIndex و answer الزامی هستند.' });
+        }
+
+        // یافتن جلسه آزمون فعال
+        const examSession = await ExamSession.findOne({ _id: sessionId, status: 'in-progress' });
+        if (!examSession) {
+            return res.status(404).json({ error: 'جلسه آزمونی یافت نشد یا به پایان رسیده است.' });
+        }
+
+        // بررسی معتبر بودن اندیس سوال
+        if (questionIndex < 0 || questionIndex >= examSession.questions.length) {
+            return res.status(400).json({ error: 'اندیس سوال نامعتبر است.' });
+        }
+
+        // به‌روزرسانی پاسخ سوال
+        examSession.questions[questionIndex].answer = answer;
+
+        // ذخیره تغییرات
+        await examSession.save();
+
+        return res.status(200).json({ message: 'پاسخ سوال با موفقیت به‌روزرسانی شد.', examSession });
+    } catch (error) {
+        next(error);
     }
 };
 
