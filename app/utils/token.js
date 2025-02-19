@@ -91,13 +91,13 @@ exports.createVerifyCode = async (user_id, userName, email) => {
             throw { message: 'ارسال کد جدید در این زمان مقدور نیست', statusCode: 404 };
         }
         const randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000 + "";
-        const hashRandomNumber = await this.createHash(randomNumber);
+        const hashRandomNumber = await this.createHash(randomNumber, false);
 
         const result = await VerifyCode.updateOne({ user_id }, { code: hashRandomNumber }, { timestamps: true });
         return { result, code: randomNumber };
     } else {
         const randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000 + "";
-        const hashRandomNumber = await this.createHash(randomNumber);
+        const hashRandomNumber = await this.createHash(randomNumber, false);
 
 
         let verifycodeCreation = { code: hashRandomNumber };

@@ -24,6 +24,7 @@ exports.logInWithPassword = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Invalid password' });
@@ -58,7 +59,7 @@ exports.resetPasswordStepOne = async (req, res, next) => {
 
         const result = await createVerifyCode(user?.newUser?._id ?? user?._id);
 
-        if (process.env.ONLOCAL === 'true') {
+        if (process.env.ONLOCAL === "true") {
             console.log(result.code);
         } else {
             const sms = await SendVerifyCodeSms(user.userName, result.code);
@@ -134,7 +135,10 @@ exports.logInPhoneStepOne = async (req, res, next) => {
             }
         }
 
-        res.json({ message: mlogInStepOne.ok, expireTime: process.env.SMS_RESEND_DELAY });
+        const checkTime = checkDelayTime(result.result.updatedAt, process.env.SMS_RESEND_DELAY, true);
+
+
+        res.json({ message: mlogInStepOne.ok, expireTime: checkTime });
     } catch (err) {
         console.log(err);
         res.status(err.statusCode || 422).json(err);
@@ -153,9 +157,11 @@ exports.logInPhoneStepTwo = async (req, res, next) => {
             throw { message: mlogInStepTwo.fail_2, statusCode: 404 };
         }
         const codeCheck = await bcrypt.compare(code, verifycode.code);
+
         if (!codeCheck) {
             throw { message: mlogInStepTwo.fail_3, statusCode: 404 };
         }
+
         const checkTime = checkDelayTime(verifycode.updatedAt, process.env.SMS_RESEND_DELAY, true);
         if (!checkTime) {
             throw { message: mlogInStepTwo.fail_2, statusCode: 404 };
