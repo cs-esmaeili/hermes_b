@@ -87,16 +87,17 @@ exports.getActiveExamSession = async (req, res, next) => {
             })
             .lean();
 
+        if (!examSession) {
+            return res.status(404).json({ message: "جلسه امتحان جاری یافت نشد." });
+        }
 
         const remainingTime = await checkDelayTime(examSession.createdAt, examSession.exam_id.duration, true, true);
-        
+
         if (!remainingTime) {
             return res.status(404).json({ message: "زمان امتحان تمام شده است" });
         }
 
-        if (!examSession) {
-            return res.status(404).json({ message: "جلسه امتحان جاری یافت نشد." });
-        }
+
 
         examSession.exam_id.duration = remainingTime;
         return res.status(200).json({ examSession });
@@ -133,12 +134,23 @@ exports.updateQustionAnswer = async (req, res, next) => {
         // به‌روزرسانی پاسخ سوال
         examSession.questions[questionIndex].answer = answer;
 
+        // اگر سوال به‌روزرسانی شده آخرین سوال باشد، وضعیت آزمون را به "completed" تغییر می‌دهیم
+        if (questionIndex === examSession.questions.length - 1) {
+            examSession.status = "completed";
+        }
+
         // ذخیره تغییرات
         await examSession.save();
 
-        return res.status(200).json({ message: 'پاسخ سوال با موفقیت به‌روزرسانی شد.', examSession });
+        return res.status(200).json({
+            message: examSession.status === "completed"
+                ? 'آزمون به پایان رسید.'
+                : 'پاسخ سوال با موفقیت به‌روزرسانی شد.',
+            examSession
+        });
     } catch (error) {
         next(error);
     }
 };
+
 
