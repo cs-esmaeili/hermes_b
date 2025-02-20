@@ -3,6 +3,7 @@ const ExamRestriction = require('../database/models/ExamRestriction');
 const Exam = require('../database/models/Exam');
 const Question = require('../database/models/Question');
 const { checkDelayTime } = require('../utils/checkTime');
+const { userHavePermission } = require('../utils/user');
 
 
 exports.startExam = async (req, res, next) => {
@@ -114,6 +115,7 @@ exports.updateQustionAnswer = async (req, res, next) => {
     try {
         // فرض بر این است که در body درخواست، sessionId، questionIndex و answer ارسال می‌شود
         const { sessionId, questionIndex, answer } = req.body;
+        const user_id = req.user._id;
 
         // اعتبارسنجی اولیه
         if (typeof sessionId === 'undefined' || typeof questionIndex === 'undefined' || typeof answer === 'undefined') {
@@ -121,7 +123,11 @@ exports.updateQustionAnswer = async (req, res, next) => {
         }
 
         // یافتن جلسه آزمون فعال
-        const examSession = await ExamSession.findOne({ _id: sessionId, status: 'in-progress' });
+        const examSession = await ExamSession.findOne({ _id: sessionId, status: 'in-progress', user_id }).populate({
+            path: "questions.question_id",
+            // فرض می‌کنیم correctOption در Question موجود است
+            select: "correctOption"
+        });
         if (!examSession) {
             return res.status(404).json({ error: 'جلسه آزمونی یافت نشد یا به پایان رسیده است.' });
         }
@@ -137,6 +143,26 @@ exports.updateQustionAnswer = async (req, res, next) => {
         // اگر سوال به‌روزرسانی شده آخرین سوال باشد، وضعیت آزمون را به "completed" تغییر می‌دهیم
         if (questionIndex === examSession.questions.length - 1) {
             examSession.status = "completed";
+
+            // محاسبه تعداد جواب صحیح
+            let correctCount = 0;
+            examSession.questions.forEach(q => {
+                const correntAnswer = +q.question_id.correctOption;
+                const currentAnswer = +q.answer;
+
+
+                // اگر پاسخ ثبت شده صحیح بوده باشد (فرض می‌کنیم q.question_id.correctOption حاوی پاسخ صحیح به صورت رشته است)
+                if (
+                    q.answer !== null &&
+                    q.answer !== "unanswered" &&
+                    currentAnswer === correntAnswer
+                ) {
+                    correctCount++;
+                }
+            });
+            const totalQuestions = examSession.questions.length;
+            // نمره را به صورت درصد (از 100) محاسبه می‌کنیم (با گرد کردن به نزدیک‌ترین عدد صحیح)
+            examSession.score = Math.round((correctCount / totalQuestions) * 100);
         }
 
         // ذخیره تغییرات
@@ -154,3 +180,31 @@ exports.updateQustionAnswer = async (req, res, next) => {
 };
 
 
+exports.getExamSession = async (req, res, next) => {
+    try {
+        const user_id = req.user._id;
+        const { session_id } = req.body;
+
+        const check = await userHavePermission(req.user._id, "examSessions.getExamSession.others");
+
+        let searchQuery = { _id: session_id, user_id }
+        if (check) searchQuery = { _id: session_id }
+
+
+        let examSession = await ExamSession.findOne(searchQuery)
+            .populate({ path: "exam_id" })
+            .populate({ path: "questions.question_id" })
+            .lean();
+
+
+        if (!examSession) {
+            return res.status(404).json({ message: "جلسه امتحان جاری یافت نشد." });
+        }
+
+        return res.status(200).json({ examSession });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "خطایی رخ داده است." });
+    }
+};

@@ -68,6 +68,8 @@ const upload = multer({ storage: storage });
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
+  
+
   app.use(cors());
 
   //* Static Folder
