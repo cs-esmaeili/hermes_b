@@ -6,6 +6,28 @@ const { checkDelayTime } = require('../utils/checkTime');
 const { userHavePermission } = require('../utils/user');
 
 
+
+exports.getExamSessions = async (req, res, next) => {
+    try {
+        const { page, perPage } = req.body;
+        const user_id = req.user._id;
+
+        const check = await userHavePermission(req.user._id, "examSessions.getExamSessions.others");
+        let searchQuery = { user_id }
+        if (check) searchQuery = {};
+
+        const examSession = await ExamSession.find(searchQuery)
+            .populate("user_id")
+            .populate("exam_id")
+            .skip((page - 1) * perPage).limit(perPage).lean();
+        const examSessionCount = await Exam.countDocuments({}).lean();
+        res.send({ examSessionCount, examSession });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.startExam = async (req, res, next) => {
     try {
         const { exam_id } = req.body;

@@ -19,10 +19,14 @@ const ExamSchema = buildSchema({
         type: Number,
         default: 3
     },
-    timeGate: {
+    minScore: {
         type: Number,
-        default: 0
-    }
+        default: 3
+    },
+    // timeGate: {
+    //     type: Number,
+    //     default: 0
+    // }
 });
 
 module.exports = mongoose.model("Exam", ExamSchema, "Exam");

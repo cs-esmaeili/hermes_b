@@ -8,5 +8,6 @@ router.post("/startExam", examSession.startExam);
 router.post("/getActiveExamSession", examSession.getActiveExamSession);
 router.post("/updateQustionAnswer", examSession.updateQustionAnswer);
 router.post("/getExamSession", examSession.getExamSession);
+router.post("/getExamSessions", examSession.getExamSessions);
 
 module.exports = router;
