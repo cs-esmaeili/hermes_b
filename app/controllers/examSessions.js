@@ -4,27 +4,40 @@ const Exam = require('../database/models/Exam');
 const Question = require('../database/models/Question');
 const { checkDelayTime } = require('../utils/checkTime');
 const { userHavePermission } = require('../utils/user');
-
-
+const { endExam } = require('../utils/exam');
+const { checkAndUpdateExamSession } = require("../utils/exam");
 
 exports.getExamSessions = async (req, res, next) => {
     try {
         const { page, perPage } = req.body;
         const user_id = req.user._id;
 
-        const check = await userHavePermission(req.user._id, "examSessions.getExamSessions.others");
-        let searchQuery = { user_id }
-        if (check) searchQuery = {};
+        const hasPermission = await userHavePermission(user_id, "examSessions.getExamSessions.others");
+        let searchQuery = { user_id };
+        if (hasPermission) {
+            searchQuery = {};
+        }
 
-        const examSession = await ExamSession.find(searchQuery)
+        let examSessions = await ExamSession.find(searchQuery)
             .populate("user_id")
             .populate("exam_id")
-            .skip((page - 1) * perPage).limit(perPage).lean();
-        const examSessionCount = await Exam.countDocuments({}).lean();
-        res.send({ examSessionCount, examSession });
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .lean();
 
+        examSessions = await Promise.all(
+            examSessions.map(async (session) => {
+                return await checkAndUpdateExamSession(session);
+            })
+        );
+
+        const examSessionCount = await ExamSession.countDocuments(searchQuery);
+
+        res.send({ examSessionCount, examSessions });
     } catch (error) {
-        next(error);
+        console.log(error);
+
     }
 };
 
@@ -38,7 +51,6 @@ exports.startExam = async (req, res, next) => {
             return res.status(404).json({ message: "امتحان مورد نظر یافت نشد." });
         }
 
-        // پیدا کردن محدودیت امتحان برای کاربر
         let restriction = await ExamRestriction.findOne({ user_id, exam_id });
         if (!restriction) {
             restriction = new ExamRestriction({
@@ -53,24 +65,18 @@ exports.startExam = async (req, res, next) => {
             return res.status(400).json({ message: "تعداد دفعات مجاز امتحان به پایان رسیده است." });
         }
 
-        // کاهش تعداد دفعات باقی‌مانده و ذخیره تغییرات
         restriction.remainingAttempts -= 1;
         await restriction.save();
 
-        // انتخاب تصادفی سوالات بر اساس تعداد سوالات تعیین شده در امتحان
-        // فرض بر این است که فیلد exam.questionCount موجود است.
         const selectedQuestions = await Question.aggregate([
             { $match: { exam_id: exam._id } },
             { $sample: { size: exam.questionCount } }
         ]);
 
-        // آماده‌سازی آرایه سوالات برای ثبت در جلسه امتحان
-        // در اینجا از مقدار 0 برای answer استفاده شده که نشان‌دهنده‌ی "پاسخ داده نشده" است.
         const questionsForSession = selectedQuestions.map(q => ({
             question_id: q._id,
         }));
 
-        // ایجاد یک جلسه امتحان جدید (ExamSession)
         const examSession = new ExamSession({
             user_id,
             exam_id,
@@ -96,13 +102,11 @@ exports.getActiveExamSession = async (req, res, next) => {
         const user_id = req.user._id;
         const { session_id } = req.body;
 
-
-        let examSession = await ExamSession.findOne(
-            {
-                _id: session_id,
-                user_id,
-                status: "in-progress"
-            })
+        let examSession = await ExamSession.findOne({
+            _id: session_id,
+            user_id,
+            status: "in-progress"
+        })
             .populate({ path: "exam_id" })
             .populate({
                 path: "questions.question_id",
@@ -114,17 +118,25 @@ exports.getActiveExamSession = async (req, res, next) => {
             return res.status(404).json({ message: "جلسه امتحان جاری یافت نشد." });
         }
 
-        const remainingTime = await checkDelayTime(examSession.createdAt, examSession.exam_id.duration, true, true);
+        examSession = await checkAndUpdateExamSession(examSession);
+
+        if (examSession.status !== "in-progress") {
+            return res.status(404).json({ message: "زمان امتحان تمام شده است" });
+        }
+
+        const remainingTime = checkDelayTime(
+            examSession.createdAt,
+            examSession.exam_id.duration,
+            true,
+            true
+        );
 
         if (!remainingTime) {
             return res.status(404).json({ message: "زمان امتحان تمام شده است" });
         }
 
-
-
         examSession.exam_id.duration = remainingTime;
         return res.status(200).json({ examSession });
-
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "خطایی رخ داده است." });
@@ -135,96 +147,70 @@ exports.getActiveExamSession = async (req, res, next) => {
 
 exports.updateQustionAnswer = async (req, res, next) => {
     try {
-        // فرض بر این است که در body درخواست، sessionId، questionIndex و answer ارسال می‌شود
         const { sessionId, questionIndex, answer } = req.body;
         const user_id = req.user._id;
 
-        // اعتبارسنجی اولیه
         if (typeof sessionId === 'undefined' || typeof questionIndex === 'undefined' || typeof answer === 'undefined') {
             return res.status(400).json({ error: 'مقادیر sessionId، questionIndex و answer الزامی هستند.' });
         }
 
-        // یافتن جلسه آزمون فعال
-        const examSession = await ExamSession.findOne({ _id: sessionId, status: 'in-progress', user_id }).populate({
-            path: "questions.question_id",
-            // فرض می‌کنیم correctOption در Question موجود است
-            select: "correctOption"
-        });
+        const examSession = await ExamSession.findOne({ _id: sessionId, status: 'in-progress', user_id })
+            .populate({
+                path: "questions.question_id",
+                select: "correctOption"
+            });
+
         if (!examSession) {
             return res.status(404).json({ error: 'جلسه آزمونی یافت نشد یا به پایان رسیده است.' });
         }
 
-        // بررسی معتبر بودن اندیس سوال
         if (questionIndex < 0 || questionIndex >= examSession.questions.length) {
             return res.status(400).json({ error: 'اندیس سوال نامعتبر است.' });
         }
 
-        // به‌روزرسانی پاسخ سوال
         examSession.questions[questionIndex].answer = answer;
 
-        // اگر سوال به‌روزرسانی شده آخرین سوال باشد، وضعیت آزمون را به "completed" تغییر می‌دهیم
         if (questionIndex === examSession.questions.length - 1) {
-            examSession.status = "completed";
-
-            // محاسبه تعداد جواب صحیح
-            let correctCount = 0;
-            examSession.questions.forEach(q => {
-                const correntAnswer = +q.question_id.correctOption;
-                const currentAnswer = +q.answer;
-
-
-                // اگر پاسخ ثبت شده صحیح بوده باشد (فرض می‌کنیم q.question_id.correctOption حاوی پاسخ صحیح به صورت رشته است)
-                if (
-                    q.answer !== null &&
-                    q.answer !== "unanswered" &&
-                    currentAnswer === correntAnswer
-                ) {
-                    correctCount++;
-                }
+            const updatedSession = await endExam(sessionId, user_id);
+            return res.status(200).json({
+                message: 'آزمون به پایان رسید.',
+                examSession: updatedSession
             });
-            const totalQuestions = examSession.questions.length;
-            // نمره را به صورت درصد (از 100) محاسبه می‌کنیم (با گرد کردن به نزدیک‌ترین عدد صحیح)
-            examSession.score = Math.round((correctCount / totalQuestions) * 100);
+        } else {
+            await examSession.save();
+            return res.status(200).json({
+                message: 'پاسخ سوال با موفقیت به‌روزرسانی شد.',
+                examSession
+            });
         }
-
-        // ذخیره تغییرات
-        await examSession.save();
-
-        return res.status(200).json({
-            message: examSession.status === "completed"
-                ? 'آزمون به پایان رسید.'
-                : 'پاسخ سوال با موفقیت به‌روزرسانی شد.',
-            examSession
-        });
     } catch (error) {
         next(error);
     }
 };
-
 
 exports.getExamSession = async (req, res, next) => {
     try {
         const user_id = req.user._id;
         const { session_id } = req.body;
 
-        const check = await userHavePermission(req.user._id, "examSessions.getExamSession.others");
-
-        let searchQuery = { _id: session_id, user_id }
-        if (check) searchQuery = { _id: session_id }
-
+        const hasPermission = await userHavePermission(req.user._id, "examSessions.getExamSession.others");
+        let searchQuery = { _id: session_id, user_id };
+        if (hasPermission) searchQuery = { _id: session_id };
 
         let examSession = await ExamSession.findOne(searchQuery)
             .populate({ path: "exam_id" })
             .populate({ path: "questions.question_id" })
             .lean();
 
-
         if (!examSession) {
             return res.status(404).json({ message: "جلسه امتحان جاری یافت نشد." });
         }
 
-        return res.status(200).json({ examSession });
+        if (examSession.status === "in-progress" && examSession.exam_id) {
+            examSession = await checkAndUpdateExamSession(examSession);
+        }
 
+        return res.status(200).json({ examSession });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "خطایی رخ داده است." });
