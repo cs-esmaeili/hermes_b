@@ -194,8 +194,9 @@ exports.getExamSession = async (req, res, next) => {
         const { session_id } = req.body;
 
         const hasPermission = await userHavePermission(req.user._id, "examSessions.getExamSession.others");
-        let searchQuery = { _id: session_id, user_id };
-        if (hasPermission) searchQuery = { _id: session_id };
+        let searchQuery = { _id: session_id, user_id, status: "completed" };
+
+        if (hasPermission) searchQuery = { _id: session_id, status: "completed" };
 
         let examSession = await ExamSession.findOne(searchQuery)
             .populate({ path: "exam_id" })
@@ -203,7 +204,7 @@ exports.getExamSession = async (req, res, next) => {
             .lean();
 
         if (!examSession) {
-            return res.status(404).json({ message: "جلسه امتحان جاری یافت نشد." });
+            return res.status(404).json({ message: "جلسه امتحان  یافت نشد." });
         }
 
         if (examSession.status === "in-progress" && examSession.exam_id) {

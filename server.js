@@ -108,7 +108,7 @@ const upload = multer({ storage: storage });
   const PORT = process.env.PORT || 3000;
 
   server.listen(PORT, () => {
-    backUpService();
+    // backUpService();
     LogService();
     reloadJobs();
     global.io = io;

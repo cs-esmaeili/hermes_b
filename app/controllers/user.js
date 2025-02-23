@@ -6,6 +6,7 @@ const { createHash } = require("../utils/token");
 const FileManager = require('../class/filemanager');
 const { createApproval } = require('../controllers/approval');
 const Approval = require('../database/models/Approval');
+const Role = require('../database/models/Role');
 const fileManager = FileManager.getInstance();
 
 exports.securityCheck = async (req, res, next) => {
@@ -45,7 +46,7 @@ exports.userInformation = async (req, res, next) => {
         if (user.approval_id) {
             finalUser = user.approval_id.User;
         }
-        
+
         res.send({
             permissions,
             information: finalUser
@@ -128,7 +129,7 @@ exports.updateUserData = async (req, res, next) => {
 
         const { address, fullName, nationalCode, birthday, shebaNumber, cardNumber
             , fatherName, companyName, economicCode, registrationNumber, postalCode
-            , ostan, shahr, github, linkedin, telegram, instagram, twitter, biography
+            , ostan, shahr, github, linkedin, telegram, instagram, twitter, biography, iWant
         } = req.body;
 
         let { user_id, role_id, email, password, userName } = req.body;
@@ -137,6 +138,11 @@ exports.updateUserData = async (req, res, next) => {
         if (!user_id || user_id == "") {
             user_id = req.user._id;
         }
+
+        if (iWant) {
+            role_id = (await Role.findOne({ name : iWant }))?._id || role_id;
+        }
+        
         const updateData = {
             'User.data.address': address,
             'User.data.fullName': fullName,
@@ -195,7 +201,7 @@ exports.createUser = async (req, res, next) => {
 
         const { address, fullName, nationalCode, birthday, shebaNumber, cardNumber
             , fatherName, companyName, economicCode, registrationNumber, postalCode
-            , ostan, shahr, github, linkedin, telegram, instagram, twitter, biography
+            , ostan, shahr, github, linkedin, telegram, instagram, twitter, biography, iWant
         } = req.body;
 
 
@@ -226,6 +232,7 @@ exports.createUser = async (req, res, next) => {
                 telegram,
                 instagram,
                 twitter,
+                iWant
             },
             role_id,
             email,
