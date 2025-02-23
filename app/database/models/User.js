@@ -6,22 +6,6 @@ const mongoose = require("mongoose");
 const validations = [
     {
         statusField: "profileCompletionStatus",
-        successStatus: "level_1",
-        requiredFields: [
-            "data.fullName",
-            "data.nationalCode",
-            "data.fatherName",
-            "data.birthday",
-            "data.cardNumber",
-            "data.shebaNumber",
-            "data.ostan",
-            "data.shahr",
-            "data.postalCode",
-            "data.address",
-        ],
-    },
-    {
-        statusField: "profileCompletionStatus",
         successStatus: "level_2",
         requiredFields: [
             "data.fullName",

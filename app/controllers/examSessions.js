@@ -3,7 +3,7 @@ const ExamRestriction = require('../database/models/ExamRestriction');
 const Exam = require('../database/models/Exam');
 const Question = require('../database/models/Question');
 const { checkDelayTime } = require('../utils/checkTime');
-const { userHavePermission } = require('../utils/user');
+const { userHavePermission, checkUserLevel } = require('../utils/user');
 const { endExam } = require('../utils/exam');
 const { checkAndUpdateExamSession } = require("../utils/exam");
 
@@ -45,6 +45,12 @@ exports.startExam = async (req, res, next) => {
     try {
         const { exam_id } = req.body;
         const user_id = req.user._id;
+
+
+        const checkLevel = await checkUserLevel(user_id, "level_2");
+        if (!checkLevel) {
+            return res.status(404).json({ message: "اطلاعات پروفایل شما برای دریافت مدرک کافی نیست", goToProfile: true });
+        }
 
         const exam = await Exam.findById(exam_id);
         if (!exam) {

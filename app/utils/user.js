@@ -75,3 +75,11 @@ exports.userHavePermission = async (user_id, permission) => {
         return false;
     }
 };
+
+exports.checkUserLevel = async (user_id, level) => {
+    const user = await User.findById(user_id);
+    if (user && (user.profileCompletionStatus == level)) {
+        return true;
+    }
+    return false;
+}
