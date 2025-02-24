@@ -21,7 +21,6 @@ const seed = async (app) => {
             duration: 60, // مدت زمان به دقیقه
             questionCount: 3,
             attemptsLimits: 3,
-            timeGate: 0
         });
         await exam.save();
 

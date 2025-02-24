@@ -21,12 +21,17 @@ const ExamSchema = buildSchema({
     },
     minScore: {
         type: Number,
-        default: 3
+        default: 30
     },
-    // timeGate: {
-    //     type: Number,
-    //     default: 0
-    // }
+    timeGate: {
+        type: Number,
+        default: 30
+    },
+    certificate: {
+        type: String,
+        required: true,
+        default: "ICDL"
+    }
 });
 
 module.exports = mongoose.model("Exam", ExamSchema, "Exam");
