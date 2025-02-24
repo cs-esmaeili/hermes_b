@@ -206,6 +206,7 @@ exports.getExamSession = async (req, res, next) => {
 
         let examSession = await ExamSession.findOne(searchQuery)
             .populate({ path: "exam_id" })
+            .populate({ path: "user_id" })
             .populate({ path: "questions.question_id" })
             .lean();
 
