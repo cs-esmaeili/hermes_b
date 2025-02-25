@@ -1,9 +1,6 @@
 const mongoose = require("mongoose");
 const { buildSchema } = require("./builder");
-const { checkDelayTime } = require("../../utils/checkTime");
-const Exam = require("./Exam");
 
-// Define the schema (make sure buildSchema returns a proper Mongoose Schema)
 const ExamSessionSchema = buildSchema({
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
@@ -40,11 +37,10 @@ const ExamSessionSchema = buildSchema({
         min: 0,
         max: 100
     },
-    // New field: the time when the exam session started.
-    startTime: {
-        type: Date,
-        default: Date.now
-    }
+    // startTime: {
+    //     type: Date,
+    //     default: Date.now
+    // }
 });
 
 

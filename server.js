@@ -17,6 +17,7 @@ const approval = require("./app/routes/approval");
 const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
 const examSessions = require("./app/routes/examSessions");
+const certificate = require("./app/routes/certificate");
 const ticket = require("./app/routes/ticket");
 const permission = require("./app/routes/permission");
 const { getMainPartOfUrl } = require("./app/utils/general");
@@ -27,6 +28,7 @@ const { reloadJobs } = require('./app/utils/sms');
 const { checkRoutePermission } = require("./app/middlewares/checkAuth");
 const fileManager = require('./app/class/filemanager');
 const { setApp } = require('./app/AppInstance');
+
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -94,6 +96,7 @@ const upload = multer({ storage: storage });
   app.use("/question", question);
   app.use("/exam", exam);
   app.use("/examSessions", examSessions);
+  app.use("/certificate", certificate);
 
   //* 404 Page
   // app.use(require("./controllers/errorController").get404);

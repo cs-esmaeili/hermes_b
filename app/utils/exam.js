@@ -1,6 +1,8 @@
 const ExamSession = require("../../app/database/models/ExamSession"); // Adjust the path as needed
-const Exam = require("../database/models/Exam");
+const Certificate = require("../../app/database/models/Certificate"); // Adjust the path as needed
+const { createPureCertificate } = require("../utils/certificate");
 const { checkDelayTime } = require("./checkTime");
+const { url } = require("inspector");
 
 /**
  * Ends an exam session by sessionId and userId.
@@ -16,7 +18,7 @@ exports.endExam = async (sessionId, userId) => {
         throw new Error('SessionId is required.');
     }
 
-    // Find the exam session that is still in progress for this user
+    // پیدا کردن جلسه‌ی آزمون که هنوز در حال اجرا است
     const examSession = await ExamSession.findOne({
         _id: sessionId,
         status: 'in-progress',
@@ -24,21 +26,22 @@ exports.endExam = async (sessionId, userId) => {
     }).populate({
         path: "questions.question_id",
         select: "correctOption"
-    });
+    })
+        .populate("exam_id")
+        .populate("user_id");
 
     if (!examSession) {
         throw new Error('Exam session not found or already completed.');
     }
 
-    // Mark the exam session as completed
+    // علامت‌گذاری جلسه‌ی آزمون به عنوان تکمیل شده
     examSession.status = "completed";
 
-    // Calculate the score based on correct answers
+    // محاسبه امتیاز بر اساس پاسخ‌های صحیح
     let correctCount = 0;
     examSession.questions.forEach(q => {
         const correctAnswer = +q.question_id.correctOption;
         const userAnswer = +q.answer;
-
         if (
             q.answer !== null &&
             q.answer !== "unanswered" &&
@@ -50,11 +53,19 @@ exports.endExam = async (sessionId, userId) => {
     const totalQuestions = examSession.questions.length;
     examSession.score = Math.round((correctCount / totalQuestions) * 100);
 
-    // Save the updated exam session
+    // ذخیره‌ی جلسه‌ی آزمون به‌روزشده
     await examSession.save();
 
-    return examSession;
+    const cert = createPureCertificate(examSession.exam_id.title, userId, examSession.score, examSession.exam_id.minScore,
+        examSession.user_id.data.image.url,
+        examSession.user_id.data.fullName,
+        examSession.user_id.data.nationalCode,
+        examSession.user_id.data.fatherName
+    );
+
+    return { examSession, certificate: cert };
 };
+
 
 /**
  * Checks if an exam session's allowed time has passed and, if so, updates its status.
