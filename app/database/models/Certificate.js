@@ -2,10 +2,15 @@ const mongoose = require("mongoose");
 const { buildSchema } = require("./builder");
 
 const CertificateSchema = buildSchema({
-    name: {
-        type: String,
-        required: true,
-        unique: false,
+    cert_template_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CertificateTemplate",
+        required: true
+    },
+    examSession_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ExamSession",
+        required: false
     },
     creator: {
         type: mongoose.Schema.Types.ObjectId,

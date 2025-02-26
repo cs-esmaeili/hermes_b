@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const { buildSchema } = require("./builder");
 
 const ExamSchema = buildSchema({
+    cert_template_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CertificateTemplate",
+        required: true
+    },
     title: {
         type: String,
         required: true,
@@ -27,11 +32,6 @@ const ExamSchema = buildSchema({
         type: Number,
         default: 30
     },
-    certificate: {
-        type: String,
-        required: true,
-        default: "ICDL"
-    }
 });
 
 module.exports = mongoose.model("Exam", ExamSchema, "Exam");

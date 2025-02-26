@@ -37,10 +37,6 @@ const ExamSessionSchema = buildSchema({
         min: 0,
         max: 100
     },
-    // startTime: {
-    //     type: Date,
-    //     default: Date.now
-    // }
 });
 
 
