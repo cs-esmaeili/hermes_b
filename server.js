@@ -18,6 +18,7 @@ const smsHistory = require("./app/routes/smsHistory");
 const smsTemplate = require("./app/routes/smsTemplate");
 const examSessions = require("./app/routes/examSessions");
 const certificate = require("./app/routes/certificate");
+const certificateTemplate = require("./app/routes/certificateTemplate");
 const ticket = require("./app/routes/ticket");
 const permission = require("./app/routes/permission");
 const { getMainPartOfUrl } = require("./app/utils/general");
@@ -70,7 +71,7 @@ const upload = multer({ storage: storage });
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  
+
 
   app.use(cors());
 
@@ -97,6 +98,7 @@ const upload = multer({ storage: storage });
   app.use("/exam", exam);
   app.use("/examSessions", examSessions);
   app.use("/certificate", certificate);
+  app.use("/certificateTemplate", certificateTemplate);
 
   //* 404 Page
   // app.use(require("./controllers/errorController").get404);

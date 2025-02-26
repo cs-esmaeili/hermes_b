@@ -2,7 +2,7 @@ const ExamSession = require("../../app/database/models/ExamSession"); // Adjust 
 const Certificate = require("../../app/database/models/Certificate"); // Adjust the path as needed
 const { createPureCertificate } = require("../utils/certificate");
 const { checkDelayTime } = require("./checkTime");
-const { url } = require("inspector");
+
 
 exports.endExam = async (sessionId, userId) => {
     if (!sessionId) {
@@ -40,14 +40,23 @@ exports.endExam = async (sessionId, userId) => {
     });
     const totalQuestions = examSession.questions.length;
     examSession.score = Math.round((correctCount / totalQuestions) * 100);
-
     await examSession.save();
 
-    const cert = createPureCertificate(examSession.exam_id.title, userId, examSession.score, examSession.exam_id.minScore,
+
+    const cert = createPureCertificate(
+        examSession.exam_id.cert_template_id,
+        examSession.exam_id._id,
+        userId,
+        examSession.score,
+        "paid",
+        examSession.exam_id.minScore,
         examSession.user_id.data.image.url,
         examSession.user_id.data.fullName,
         examSession.user_id.data.nationalCode,
-        examSession.user_id.data.fatherName
+        examSession.user_id.data.fatherName,
+        null,
+        examSession.createdAt,
+        examSession.exam_id.duration
     );
 
     return { examSession, certificate: cert };

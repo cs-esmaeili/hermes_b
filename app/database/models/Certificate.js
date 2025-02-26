@@ -28,6 +28,14 @@ const CertificateSchema = buildSchema({
         min: 0,
         max: 100
     },
+    startDate: {
+        type: mongoose.Schema.Types.Mixed,
+        require: true,
+    },
+    endDate: {
+        type: mongoose.Schema.Types.Mixed,
+        require: true,
+    },
     user: {
         image: {
             url: String,

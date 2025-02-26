@@ -7,15 +7,11 @@ exports.createCertificate = async (req, res, next) => {
         const certificateData = req.body;
         certificateData.creator = req.user._id;
 
-        // بررسی وجود فایل در درخواست
         if (req.file) {
-            // استخراج اطلاعات فایل از req.file
             const { buffer, originalname, mimetype } = req.file;
             const user_id = req.user._id;
-            // تعیین مسیر پوشه ذخیره فایل؛ این مسیر می‌تواند بنا به نیاز تغییر کند
             const folderPath = JSON.stringify(["", "certificates", user_id, certificateData.name]);
 
-            // ذخیره فایل با استفاده از fileManager
             const uploadedFile = await fileManager.saveFile(buffer, {
                 uploaderId: user_id,
                 originalName: originalname,
@@ -45,17 +41,22 @@ exports.createCertificate = async (req, res, next) => {
 
 exports.getAllCertificates = async (req, res, next) => {
     try {
-        // دریافت پارامترهای صفحه‌بندی از بدنه درخواست
         const { page, perPage } = req.body;
+        const user_id = req.user._id;
 
-        // یافتن Certificateها با فیلتر بر اساس creator (در صورت نیاز)
+
+        const hasPermission = await userHavePermission(user_id, "examSessions.getExamSessions.others");
+        let searchQuery = { user_id };
+        if (hasPermission) {
+            searchQuery = {};
+        }
+        
         const certificates = await Certificate.find({ creator: req.user._id })
-            .populate("creator") // در صورت نیاز می‌توانید فیلدهای دیگری مانند فایل‌های مرتبط را نیز populate کنید
+            .populate("creator")
             .skip((page - 1) * perPage)
             .limit(perPage)
             .lean();
 
-        // محاسبه تعداد کل Certificateها برای صفحه‌بندی
         const certificateCount = await Certificate.countDocuments({ creator: req.user._id });
 
         res.status(200).json({ certificateCount, certificates });
@@ -65,14 +66,10 @@ exports.getAllCertificates = async (req, res, next) => {
 };
 
 
-
-
-
-// دریافت یک Certificate بر اساس شناسه (id باید در req.body ارسال شود)
 exports.getCertificateById = async (req, res, next) => {
     try {
         const { id } = req.body;
-        const certificate = await Certificate.findById(id);
+        const certificate = await Certificate.findById(id).populate("cert_template_id").lean();
         if (!certificate) {
             return res.status(404).json({ error: 'Certificate مورد نظر یافت نشد' });
         }
@@ -82,8 +79,6 @@ exports.getCertificateById = async (req, res, next) => {
     }
 };
 
-// به‌روزرسانی یک Certificate موجود (id و بقیه فیلدها در req.body ارسال می‌شود)
-// در صورتی که عکس تغییر کرده باشد، از form-data استفاده کرده و در req.file پردازش کنید.
 exports.updateCertificate = async (req, res, next) => {
     try {
         const { id, ...updateData } = req.body;
@@ -109,7 +104,6 @@ exports.updateCertificate = async (req, res, next) => {
     }
 };
 
-// حذف یک Certificate (id باید در req.body ارسال شود)
 exports.deleteCertificate = async (req, res, next) => {
     try {
         const { id } = req.body;
