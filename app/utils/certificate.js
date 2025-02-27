@@ -17,14 +17,14 @@ exports.createPureCertificate = async (
     duration
 ) => {
     if (score < minScore) {
-        return false
+        // return false;
     }
 
     if (!startDate) {
         const miladiDateStr = jalaliToMiladi(endDate);
         const miladiDate = new Date(miladiDateStr);
         miladiDate.setDate(miladiDate.getDate() - duration);
-        endDate = utcToJalali(miladiDate);
+        startDate = utcToJalali(miladiDate);
     }
 
     const newCertificate = await Certificate.create({
@@ -43,7 +43,7 @@ exports.createPureCertificate = async (
         }
     });
     if (newCertificate) {
-        return true
+        return newCertificate
     }
     return false
 }

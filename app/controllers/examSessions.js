@@ -21,6 +21,7 @@ exports.getExamSessions = async (req, res, next) => {
         let examSessions = await ExamSession.find(searchQuery)
             .populate("user_id")
             .populate("exam_id")
+            .populate("cert_id")
             .sort({ createdAt: -1 })
             .skip((page - 1) * perPage)
             .limit(perPage)
@@ -207,6 +208,7 @@ exports.getExamSession = async (req, res, next) => {
         let examSession = await ExamSession.findOne(searchQuery)
             .populate({ path: "exam_id" })
             .populate({ path: "user_id" })
+            .populate({ path: "cert_id" })
             .populate({ path: "questions.question_id" })
             .lean();
 

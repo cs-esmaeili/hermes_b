@@ -337,11 +337,11 @@
         "name": "دریاف لیست مطالب دیگران",
         "disc": "دسترسی مورد نیاز برای دریافت لیست مطالب دیگران"
     },
-    "/dashboard/exam/:session_id": {
+    "/dashboard/ExamAndCert/exam/:session_id": {
         "name": "دریاف لیست مطالب دیگران",
         "disc": "دسترسی مورد نیاز برای دریافت لیست مطالب دیگران"
     },
-    "/dashboard/certificate/:certificate_id": {
+    "/dashboard/ExamAndCert/certificate/:certificate_id": {
         "name": "دریاف لیست مطالب دیگران",
         "disc": "دسترسی مورد نیاز برای دریافت لیست مطالب دیگران"
     },

@@ -1,5 +1,5 @@
-const ExamSession = require("../../app/database/models/ExamSession"); // Adjust the path as needed
-const Certificate = require("../../app/database/models/Certificate"); // Adjust the path as needed
+const ExamSession = require("../../app/database/models/ExamSession");
+const Certificate = require("../../app/database/models/Certificate");
 const { createPureCertificate } = require("../utils/certificate");
 const { checkDelayTime } = require("./checkTime");
 
@@ -40,10 +40,10 @@ exports.endExam = async (sessionId, userId) => {
     });
     const totalQuestions = examSession.questions.length;
     examSession.score = Math.round((correctCount / totalQuestions) * 100);
-    await examSession.save();
 
 
-    const cert = createPureCertificate(
+
+    const cert = await createPureCertificate(
         examSession.exam_id.cert_template_id,
         examSession.exam_id._id,
         userId,
@@ -58,6 +58,10 @@ exports.endExam = async (sessionId, userId) => {
         examSession.createdAt,
         examSession.exam_id.duration
     );
+    if (cert) {
+        examSession.cert_id = cert._id
+    }
+    await examSession.save();
 
     return { examSession, certificate: cert };
 };

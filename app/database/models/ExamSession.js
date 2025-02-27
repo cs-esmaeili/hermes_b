@@ -12,6 +12,11 @@ const ExamSessionSchema = buildSchema({
         ref: "Exam",
         required: true
     },
+    cert_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Certificate",
+        required: false
+    },
     questions: [
         {
             question_id: {
