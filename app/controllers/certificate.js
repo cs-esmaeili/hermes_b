@@ -1,36 +1,45 @@
-const Certificate = require('../database/models/Certificate'); // مسیر فایل مدل Certificate
+const Certificate = require('../database/models/Certificate');
+const { userHavePermission } = require('../utils/user');
+const { createPureCertificate } = require('../utils/certificate');
 const FileManager = require('../class/filemanager');
 const fileManager = FileManager.getInstance();
 
 exports.createCertificate = async (req, res, next) => {
     try {
         const certificateData = req.body;
-        certificateData.creator = req.user._id;
+        const user_id = req.user._id;
 
-        if (req.file) {
-            const { buffer, originalname, mimetype } = req.file;
-            const user_id = req.user._id;
-            const folderPath = JSON.stringify(["", "certificates", user_id, certificateData.name]);
+        certificateData.creator = user_id;
 
-            const uploadedFile = await fileManager.saveFile(buffer, {
-                uploaderId: user_id,
-                originalName: originalname,
-                mimeType: mimetype,
-                isPrivate: false,
-                folderPath: folderPath,
-            });
+        const hasPermission = await userHavePermission(user_id, "exam.certificateTemplate.NavigationMenu");
 
-            const fileUrl = await fileManager.getPublicFileUrl(uploadedFile[0]._id);
-            const filePath = await fileManager.getFilePath(uploadedFile[0]._id, user_id, false);
-            const blurHash = "s";
+        certificateData.status = hasPermission ? "paid" : "unpaid";
 
-            certificateData.user = certificateData || {};
-            certificateData.user.image = {
-                url: fileUrl,
-                blurHash: blurHash
-            };
+        if (!req.file) {
+            return res.status(404).json({ error: 'تصویر مدرک دریافت نشد' });
         }
-        const newCertificate = await Certificate.create(certificateData);
+        const { buffer, originalname, mimetype } = req.file;
+
+        const folderPath = JSON.stringify(["", "certificates", user_id, certificateData.name]);
+
+        const uploadedFile = await fileManager.saveFile(buffer, {
+            uploaderId: user_id,
+            originalName: originalname,
+            mimeType: mimetype,
+            isPrivate: false,
+            folderPath: folderPath,
+        });
+
+        const fileUrl = await fileManager.getPublicFileUrl(uploadedFile[0]._id);
+
+        certificateData.user = certificateData || {};
+
+        certificateData.user.image = {
+            url: fileUrl,
+        };
+
+        await createPureCertificate(certificateData, 0, req.body.duration);
+
         res.status(201).json({ message: "مدرک ایجاد شد" });
     } catch (err) {
         console.log(err);
@@ -45,19 +54,20 @@ exports.getAllCertificates = async (req, res, next) => {
         const user_id = req.user._id;
 
 
-        const hasPermission = await userHavePermission(user_id, "examSessions.getExamSessions.others");
-        let searchQuery = { user_id };
+        const hasPermission = await userHavePermission(user_id, "certificate.getAllCertificates.others");
+        let searchQuery = { creator: user_id };
         if (hasPermission) {
             searchQuery = {};
         }
-        
-        const certificates = await Certificate.find({ creator: req.user._id })
+
+        const certificates = await Certificate.find(searchQuery)
             .populate("creator")
+            .sort({ _id: -1 }) // ترتیب معکوس بر اساس ID (از جدیدترین به قدیمی‌ترین)
             .skip((page - 1) * perPage)
             .limit(perPage)
             .lean();
 
-        const certificateCount = await Certificate.countDocuments({ creator: req.user._id });
+        const certificateCount = await Certificate.countDocuments(searchQuery);
 
         res.status(200).json({ certificateCount, certificates });
     } catch (err) {

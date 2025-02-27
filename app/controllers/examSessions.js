@@ -176,6 +176,7 @@ exports.updateQustionAnswer = async (req, res, next) => {
         }
 
         examSession.questions[questionIndex].answer = answer;
+        await examSession.save();
 
         if (questionIndex === examSession.questions.length - 1) {
             const updatedSession = await endExam(sessionId, user_id);
@@ -184,7 +185,6 @@ exports.updateQustionAnswer = async (req, res, next) => {
                 examSession: updatedSession
             });
         } else {
-            await examSession.save();
             return res.status(200).json({
                 message: 'پاسخ سوال با موفقیت به‌روزرسانی شد.',
                 examSession

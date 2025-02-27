@@ -38,27 +38,30 @@ exports.endExam = async (sessionId, userId) => {
             correctCount++;
         }
     });
+    
     const totalQuestions = examSession.questions.length;
     examSession.score = Math.round((correctCount / totalQuestions) * 100);
 
 
 
-    const cert = await createPureCertificate(
-        examSession.exam_id.cert_template_id,
-        examSession.exam_id._id,
-        userId,
-        examSession.score,
-        "paid",
-        examSession.exam_id.minScore,
-        examSession.user_id.data.image.url,
-        examSession.user_id.data.fullName,
-        examSession.user_id.data.nationalCode,
-        examSession.user_id.data.fatherName,
-        null,
-        examSession.createdAt,
-        examSession.exam_id.duration,
-        examSession.exam_id.certTitle
-    );
+    const cert = await createPureCertificate({
+        cert_template_id: examSession.exam_id.cert_template_id,
+        examSession_id: examSession.exam_id._id,
+        score: examSession.score,
+        status: "byExam",
+        user: {
+            image: {
+                url: examSession.user_id.data.image.url
+            },
+            fullName: examSession.user_id.data.fullName,
+            nationalCode: examSession.user_id.data.nationalCode,
+            fatherName: examSession.user_id.data.fatherName
+        },
+        startDate: null,
+        endDate: examSession.createdAt,
+        title: examSession.exam_id.certTitle,
+    }, examSession.exam_id.minScore, examSession.exam_id.duration);
+
     if (cert) {
         examSession.cert_id = cert._id
     }

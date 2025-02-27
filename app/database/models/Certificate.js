@@ -23,7 +23,7 @@ const CertificateSchema = buildSchema({
     },
     status: {
         type: String,
-        enum: ["paid", "unpaid"],
+        enum: ["byExam", "paid", "unpaid"],
         default: "unpaid"
     },
     score: {
