@@ -1,9 +1,8 @@
 const { green, red } = require('colors');
 
-// مدل‌های مورد نیاز
 const Exam = require('../models/Exam');
 const CertificateTemplate = require('../models/CertificateTemplate');
-const Question = require('../models/Question'); // فرض بر این است که مدل Question وجود دارد و مسیر آن درست است
+const Question = require('../models/Question');
 
 const seqNumber = 11;
 
@@ -13,10 +12,11 @@ const seed = async (app) => {
 
         const exam = new Exam({
             title: "امتحان نمونه",
-            duration: 60, // مدت زمان به دقیقه
+            duration: 60,
             questionCount: 3,
             attemptsLimits: 3,
-            cert_template_id: certId._id
+            cert_template_id: certId._id,
+            certTitle: "امتحان نمونه برای مدرک"
         });
         await exam.save();
 

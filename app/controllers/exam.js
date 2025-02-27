@@ -2,7 +2,7 @@ const Exam = require("../database/models/Exam");
 
 exports.createExam = async (req, res, next) => {
     try {
-        const { title, duration, questionCount, minScore, timeGate, cert_template_id } = req.body;
+        const { title, duration, certTitle, questionCount, minScore, timeGate, cert_template_id } = req.body;
 
         const newExam = await Exam.create({
             title,
@@ -10,7 +10,8 @@ exports.createExam = async (req, res, next) => {
             questionCount,
             timeGate,
             minScore,
-            cert_template_id
+            cert_template_id,
+            certTitle
         });
 
         res.status(201).json({
@@ -55,11 +56,11 @@ exports.getExamById = async (req, res, next) => {
 
 exports.updateExam = async (req, res, next) => {
     try {
-        const { exam_id, title, duration, questionCount, minScore, timeGate, cert_template_id } = req.body;
+        const { exam_id, title, duration, certTitle, questionCount, minScore, timeGate, cert_template_id } = req.body;
 
         const updatedExam = await Exam.findByIdAndUpdate(
             exam_id,
-            { title, duration, questionCount, minScore, timeGate, cert_template_id },
+            { title, duration, questionCount, minScore, timeGate, cert_template_id, certTitle },
             { new: true, runValidators: true }
         );
 

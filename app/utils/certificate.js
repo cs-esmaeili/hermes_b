@@ -14,10 +14,11 @@ exports.createPureCertificate = async (
     fatherName,
     startDate,
     endDate,
-    duration
+    duration,
+    title
 ) => {
     if (score < minScore) {
-        // return false;
+        return false;
     }
 
     if (!startDate) {
@@ -35,6 +36,7 @@ exports.createPureCertificate = async (
         status,
         startDate,
         endDate,
+        title,
         user: {
             image: { url: imageUrl },
             fullName,

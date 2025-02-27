@@ -56,7 +56,8 @@ exports.endExam = async (sessionId, userId) => {
         examSession.user_id.data.fatherName,
         null,
         examSession.createdAt,
-        examSession.exam_id.duration
+        examSession.exam_id.duration,
+        examSession.exam_id.certTitle
     );
     if (cert) {
         examSession.cert_id = cert._id

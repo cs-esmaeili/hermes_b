@@ -12,6 +12,10 @@ const ExamSchema = buildSchema({
         required: true,
         unique: true
     },
+    certTitle: {
+        type: String,
+        require: true,
+    },
     duration: {
         type: Number,
         required: true

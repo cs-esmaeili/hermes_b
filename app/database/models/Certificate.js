@@ -17,6 +17,10 @@ const CertificateSchema = buildSchema({
         ref: "User",
         required: false
     },
+    title: {
+        type: String,
+        require: true,
+    },
     status: {
         type: String,
         enum: ["paid", "unpaid"],
