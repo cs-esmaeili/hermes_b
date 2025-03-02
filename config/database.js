@@ -25,11 +25,15 @@ const constructUri = () => {
 const uri = constructUri();
 
 const connectDB = async () => {
-    await mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    });
-    console.log('Connected to Database');
+    try {
+        await mongoose.connect(uri, {
+            useNewUrlParser: true // `useUnifiedTopology` حذف شد
+        });
+        console.log('✅ Connected to Database');
+    } catch (error) {
+        console.error('❌ Database Connection Error:', error);
+        process.exit(1); // در صورت شکست در اتصال، سرور را متوقف کن
+    }
 };
 
 const checkConnection = () => {
@@ -41,4 +45,5 @@ module.exports = {
     connection: mongoose.connection,
     checkConnection,
     connectDB,
+    uri
 };

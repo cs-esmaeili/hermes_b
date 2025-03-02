@@ -1,4 +1,5 @@
 const { createToken, createVerifyCode } = require("../utils/token");
+const { logEvent } = require("../utils/winston");
 const User = require("../database/models/User");
 const VerifyCode = require("../database/models/VerifyCode");
 const { SendVerifyCodeSms } = require("../utils/sms");
@@ -6,7 +7,6 @@ const { checkDelayTime } = require("../utils/checkTime");
 const { createHash } = require("../utils/token");
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
-
 const { mlogInStepOne, mlogInStepTwo } = require('../static/response.json');
 const Token = require("../database/models/Token");
 
@@ -24,13 +24,14 @@ exports.logInWithPassword = async (req, res, next) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Invalid password' });
         }
 
         const { _id, token } = await createToken(userName, user.token_id);
+
+        logEvent({ method: "logInWithPassword", level: "http", category: "auth", message: "logInWithPassword", extraData: { userName } })
 
         return res.json({
             message: 'Login successful',
