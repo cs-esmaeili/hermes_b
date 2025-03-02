@@ -1,4 +1,5 @@
 const { createToken, createVerifyCode } = require("../utils/token");
+const errorHandler = require("../utils/errorHandler");
 const { logEvent } = require("../utils/winston");
 const User = require("../database/models/User");
 const VerifyCode = require("../database/models/VerifyCode");
@@ -19,14 +20,13 @@ exports.logInWithPassword = async (req, res, next) => {
             $or: [{ userName: userName }, { email: userName }],
         });
 
-
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            throw { message: 'User not found', statusCode: 404 }
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid password' });
+            throw { message: 'Invalid password', statusCode: 401 };
         }
 
         const { _id, token } = await createToken(userName, user.token_id);
@@ -39,11 +39,9 @@ exports.logInWithPassword = async (req, res, next) => {
             sessionTime: process.env.USERS_SESSIONS_TIME,
         });
     } catch (err) {
-        console.error('Error during login:', err);
-        res.status(err.statusCode || 500).json({ message: err.message || 'Internal server error' });
+        errorHandler(res, err, "auth", "logInWithPassword");
     }
 };
-
 
 
 exports.resetPasswordStepOne = async (req, res, next) => {
@@ -55,7 +53,7 @@ exports.resetPasswordStepOne = async (req, res, next) => {
         });
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            throw { message: 'User not found', statusCode: 404 }
         }
 
         const result = await createVerifyCode(user?.newUser?._id ?? user?._id);
@@ -72,8 +70,7 @@ exports.resetPasswordStepOne = async (req, res, next) => {
 
         res.json({ message: mlogInStepOne.ok, expireTime: process.env.SMS_RESEND_DELAY });
     } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
+        errorHandler(res, err, "auth", "resetPasswordStepOne");
     }
 }
 
@@ -111,8 +108,7 @@ exports.resetPasswordStepTwo = async (req, res, next) => {
             sessionTime: process.env.USERS_SESSIONS_TIME,
         });
     } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
+        errorHandler(res, err, "auth", "resetPasswordStepTwo");
     }
 }
 
@@ -141,8 +137,7 @@ exports.logInPhoneStepOne = async (req, res, next) => {
 
         res.json({ message: mlogInStepOne.ok, expireTime: checkTime });
     } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
+        errorHandler(res, err, "auth", "logInPhoneStepOne");
     }
 }
 
@@ -177,29 +172,23 @@ exports.logInPhoneStepTwo = async (req, res, next) => {
         });
 
     } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
+        errorHandler(res, err, "auth", "logInPhoneStepTwo");
     }
 }
 
 
 const verifyGoogleToken = async (accessToken, email) => {
-    try {
-        const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        });
+    const response = await axiosw.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
 
-        const userData = response.data;
+    const userData = response.data;
 
-        if (userData.email === email && userData.email_verified) {
-            return true;
-        } else {
-            return false;
-        }
-    } catch (error) {
-        console.error('Error verifying Google token:', error.message);
+    if (userData.email === email && userData.email_verified) {
+        return true;
+    } else {
         return false;
     }
 };
@@ -208,7 +197,7 @@ exports.googleLogInCheckNeedRegister = async (req, res, next) => {
     try {
         const { email, accessToken } = await req.body;
 
-        const isValid = true; //  await verifyGoogleToken(accessToken, email);
+        const isValid = await verifyGoogleToken(accessToken, email);
 
         if (!isValid) {
             throw { message: "مشکلی در ارتباط با گوگل پیش آمد دوباره تلاش کنید", statusCode: 500 };
@@ -232,8 +221,7 @@ exports.googleLogInCheckNeedRegister = async (req, res, next) => {
 
 
     } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
+        errorHandler(res, err, "auth", "googleLogInCheckNeedRegister");
     }
 }
 
@@ -254,8 +242,7 @@ exports.firstLogInWithGoogleStepOne = async (req, res, next) => {
 
         res.json({ message: mlogInStepOne.ok, expireTime: process.env.SMS_RESEND_DELAY });
     } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
+        errorHandler(res, err, "auth", "firstLogInWithGoogleStepOne");
     }
 }
 
@@ -301,7 +288,6 @@ exports.firstLogInWithGoogleStepTwo = async (req, res, next) => {
             sessionTime: process.env.USERS_SESSIONS_TIME,
         });
     } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
+        errorHandler(res, err, "auth", "firstLogInWithGoogleStepTwo");
     }
 }

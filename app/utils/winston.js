@@ -14,7 +14,7 @@ const fileLogger = winston.createLogger({
     transports: [
         new winston.transports.File({
             filename: logDir,
-            level: "silly" 
+            level: "silly"
         })
     ]
 });
@@ -29,7 +29,7 @@ const getDbLogger = () => {
             ),
             transports: [
                 new winston.transports.MongoDB({
-                    db: uri, 
+                    db: uri,
                     collection: "Log",
                     level: "silly"
                 })
@@ -49,25 +49,25 @@ const consoleLogger = winston.createLogger({
     ]
 });
 
-const logEvent = ({ onFile = false, onConsole = false, method, level, category, message, extraData = {} }) => {
+const logEvent = ({ onFile = false, onConsole = false, onDatabase = true, method, level, category, message, extraData = {} }) => {
     const logData = {
         method,
         category,
         message,
-        time: currentTime(), 
+        time: currentTime(),
         ...extraData
     };
 
     if (onFile) {
-        fileLogger.log(level, logData); 
+        fileLogger.log(level, logData);
     }
-
-    getDbLogger().log(level, logData); 
-
+    if (onDatabase) {
+        getDbLogger().log(level, logData);
+    }
     if (onConsole) {
-        consoleLogger.log(level, logData);
+        console.log(message);
     }
 };
 
 
-module.exports = { fileLogger, getDbLogger, consoleLogger, logEvent };
+module.exports = { fileLogger, getDbLogger, logEvent };
