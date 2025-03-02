@@ -18,7 +18,7 @@ exports.logInWithPassword = async (req, res, next) => {
 
         const user = await User.findOne({
             $or: [{ userName: userName }, { email: userName }],
-        });
+        }).populate("role_id");
 
         if (!user) {
             throw { message: 'User not found', statusCode: 404 }
@@ -31,7 +31,8 @@ exports.logInWithPassword = async (req, res, next) => {
 
         const { _id, token } = await createToken(userName, user.token_id);
 
-        logEvent({ method: "logInWithPassword", level: "http", category: "auth", message: "logInWithPassword", extraData: { userName } })
+        if (user?.role_id != "User")
+            logEvent({ method: "logInWithPassword", level: "http", category: "auth", extraData: { userName } })
 
         return res.json({
             message: 'Login successful',
@@ -50,7 +51,7 @@ exports.resetPasswordStepOne = async (req, res, next) => {
 
         const user = await User.findOne({
             $or: [{ userName: userName }, { email: userName }],
-        });
+        }).populate("role_id");
 
         if (!user) {
             throw { message: 'User not found', statusCode: 404 }
@@ -67,6 +68,8 @@ exports.resetPasswordStepOne = async (req, res, next) => {
             }
         }
 
+        if (user?.role_id != "User")
+            logEvent({ method: "resetPasswordStepOne", level: "http", category: "auth", extraData: { userName } })
 
         res.json({ message: mlogInStepOne.ok, expireTime: process.env.SMS_RESEND_DELAY });
     } catch (err) {
@@ -80,7 +83,7 @@ exports.resetPasswordStepTwo = async (req, res, next) => {
 
         const user = await User.findOne({
             $or: [{ userName: userName }, { email: userName }],
-        });
+        }).populate("role_id");;
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -102,6 +105,10 @@ exports.resetPasswordStepTwo = async (req, res, next) => {
         const hashPassword = await createHash(password);
         const userUpdate = await User.updateOne({ _id: user._id }, { token_id: _id, password: hashPassword });
         const verifyCodeDelete = await VerifyCode.deleteOne({ user_id: user._id }).lean();
+
+        if (user?.role_id != "User")
+            logEvent({ method: "resetPasswordStepTwo", level: "http", category: "auth", extraData: { userName } })
+
         res.json({
             message: mlogInStepTwo.ok,
             token,
@@ -113,9 +120,10 @@ exports.resetPasswordStepTwo = async (req, res, next) => {
 }
 
 exports.logInPhoneStepOne = async (req, res, next) => {
+    const methodName = "logInPhoneStepOne";
     try {
         const { userName } = await req.body;
-        let user = await User.findOne({ userName });
+        let user = await User.findOne({ userName }).populate("role_id");;
 
         if (!user) {
             user = await User.createNormalUser(userName);
@@ -134,10 +142,12 @@ exports.logInPhoneStepOne = async (req, res, next) => {
 
         const checkTime = checkDelayTime(result.result.updatedAt, process.env.SMS_RESEND_DELAY, true);
 
+        if (user?.role_id != "User")
+            logEvent({ method: methodName, level: "http", category: "auth", extraData: { userName } })
 
         res.json({ message: mlogInStepOne.ok, expireTime: checkTime });
     } catch (err) {
-        errorHandler(res, err, "auth", "logInPhoneStepOne");
+        errorHandler(res, err, "auth", methodName);
     }
 }
 
@@ -165,6 +175,10 @@ exports.logInPhoneStepTwo = async (req, res, next) => {
         const { _id, token } = await createToken(userName, user.token_id);
         const userUpdate = await User.updateOne({ _id: user._id }, { token_id: _id });
         const verifyCodeDelete = await VerifyCode.deleteOne({ user_id: user._id }).lean();
+
+        if (user?.role_id != "User")
+            logEvent({ method: "logInPhoneStepTwo", level: "http", category: "auth", extraData: { userName } })
+
         res.json({
             message: mlogInStepTwo.ok,
             token,
@@ -178,7 +192,7 @@ exports.logInPhoneStepTwo = async (req, res, next) => {
 
 
 const verifyGoogleToken = async (accessToken, email) => {
-    const response = await axiosw.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+    const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: {
             Authorization: `Bearer ${accessToken}`,
         },
@@ -203,7 +217,7 @@ exports.googleLogInCheckNeedRegister = async (req, res, next) => {
             throw { message: "مشکلی در ارتباط با گوگل پیش آمد دوباره تلاش کنید", statusCode: 500 };
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).populate("role_id");
 
 
         if (!user) {
@@ -212,6 +226,10 @@ exports.googleLogInCheckNeedRegister = async (req, res, next) => {
 
         const { _id, token } = await createToken(user.userName, user.token_id);
         const userUpdate = await User.updateOne({ _id: user._id }, { token_id: _id });
+
+        if (user?.role_id != "User")
+            logEvent({ method: "googleLogInCheckNeedRegister", level: "http", category: "auth", extraData: { userName } })
+
         res.json({
             userName: user.userName,
             message: mlogInStepTwo.ok,
@@ -240,6 +258,7 @@ exports.firstLogInWithGoogleStepOne = async (req, res, next) => {
             }
         }
 
+
         res.json({ message: mlogInStepOne.ok, expireTime: process.env.SMS_RESEND_DELAY });
     } catch (err) {
         errorHandler(res, err, "auth", "firstLogInWithGoogleStepOne");
@@ -251,7 +270,7 @@ exports.firstLogInWithGoogleStepTwo = async (req, res, next) => {
 
         const { userName, email, code, password } = await req.body;
 
-        let user = await User.findOne({ $or: [{ userName }, { email }] });
+        let user = await User.findOne({ $or: [{ userName }, { email }] }).populate("role_id");
 
 
         const verifycode = await VerifyCode.findOne({ email }).lean();
@@ -281,6 +300,9 @@ exports.firstLogInWithGoogleStepTwo = async (req, res, next) => {
 
         await VerifyCode.deleteOne({ userName }).lean();
         await VerifyCode.deleteOne({ email }).lean();
+
+        if (user?.role_id != "User")
+            logEvent({ method: "firstLogInWithGoogleStepTwo", level: "http", category: "auth", extraData: { userName } })
 
         res.json({
             message: mlogInStepTwo.ok,

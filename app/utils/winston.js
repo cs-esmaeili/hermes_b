@@ -39,21 +39,12 @@ const getDbLogger = () => {
     return dbLogger;
 };
 
-const consoleLogger = winston.createLogger({
-    level: "silly",
-    format: winston.format.combine(
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.Console()
-    ]
-});
 
-const logEvent = ({ onFile = false, onConsole = false, onDatabase = true, method, level, category, message, extraData = {} }) => {
+const logEvent = ({ onFile = false, onConsole = false, onDatabase = true, method, level, category, message = null, extraData = {} }) => {
     const logData = {
         method,
         category,
-        message,
+        message: (!message) ? method : message,
         time: currentTime(),
         ...extraData
     };

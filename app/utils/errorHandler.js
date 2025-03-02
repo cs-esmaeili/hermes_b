@@ -18,7 +18,7 @@ module.exports = (res, error, category, method, extraData = null) => {
     if (process.env.ONLOCAL === "true") {
         console.log(error);
     } else {
-        if (!error.statusCode || error.statusCode == 500 || error.statusCode == "500") {
+        if (!error.statusCode || error.statusCode == 500) {
             log.level = "error";
         }
         logEvent(log);
