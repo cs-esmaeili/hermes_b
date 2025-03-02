@@ -1,6 +1,6 @@
 const Approval = require('../database/models/Approval');
 const mongoose = require('mongoose');
-const { currentTime } = require("../utils/TimeConverter");
+const errorHandler = require("../utils/errorHandler");
 
 exports.createApproval = async (title, model, user_id, field_id, draft, comment) => {
     try {
@@ -46,8 +46,7 @@ exports.createApproval = async (title, model, user_id, field_id, draft, comment)
 
         return approval;
     } catch (error) {
-        console.error("Error Create approval:", error);
-        throw error;
+        errorHandler(null, error, "approval", "createApproval");
     }
 };
 
@@ -62,10 +61,8 @@ exports.getApprovals = async (req, res, next) => {
 
         const approvalsCount = await Approval.countDocuments({});
         res.send({ approvalsCount, approvals });
-    } catch (err) {
-        console.log(err);
-
-        res.status(err.statusCode || 422).json(err.errors || err.message);
+    } catch (error) {
+        errorHandler(null, error, "approval", "getApprovals");
     }
 };
 
@@ -96,8 +93,7 @@ exports.acceptApproval = async (req, res, next) => {
 
         res.send({ message: "Approval accepted successfully" });
     } catch (error) {
-        console.error("Error processing approval:", error);
-        res.status(500).send({ message: "Internal Server Error" });
+        errorHandler(null, error, "approval", "acceptApproval");
     }
 };
 
@@ -123,7 +119,6 @@ exports.rejectApproval = async (req, res, next) => {
 
         res.send({ message: "Approval rejected successfully", update });
     } catch (error) {
-        console.error("Error processing approval:", error);
-        res.status(500).send({ message: "Internal Server Error" });
+        errorHandler(null, error, "approval", "rejectApproval");
     }
 };

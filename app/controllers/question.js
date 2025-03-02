@@ -1,4 +1,5 @@
 const Question = require("../database/models/Question");
+const errorHandler = require("../utils/errorHandler");
 
 exports.createQuestion = async (req, res, next) => {
     try {
@@ -16,21 +17,19 @@ exports.createQuestion = async (req, res, next) => {
             question: newQuestion
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "question", "createQuestion");
     }
 };
 
 exports.getQuestions = async (req, res, next) => {
     try {
         const { page, perPage } = req.body;
-
-
         const questions = await Question.find({}).populate("exam_id").skip((page - 1) * perPage).limit(perPage).lean();
         const questionCount = await Question.countDocuments({}).lean();
 
         res.status(200).json({ questions, questionCount });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "question", "getQuestions");
     }
 };
 
@@ -54,7 +53,7 @@ exports.updateQuestion = async (req, res, next) => {
             question: updatedQuestion
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "question", "updateQuestion");
     }
 };
 
@@ -71,6 +70,6 @@ exports.deleteQuestion = async (req, res, next) => {
             message: "Question deleted successfully"
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "question", "deleteQuestion");
     }
 };

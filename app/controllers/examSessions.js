@@ -6,6 +6,7 @@ const { checkDelayTime } = require('../utils/checkTime');
 const { userHavePermission, checkUserLevel } = require('../utils/user');
 const { endExam } = require('../utils/exam');
 const { checkAndUpdateExamSession } = require("../utils/exam");
+const errorHandler = require("../utils/errorHandler");
 
 exports.getExamSessions = async (req, res, next) => {
     try {
@@ -37,8 +38,7 @@ exports.getExamSessions = async (req, res, next) => {
 
         res.send({ examSessionCount, examSessions });
     } catch (error) {
-        console.log(error);
-
+        errorHandler(res, error, "examSessions", "getExamSessions");
     }
 };
 
@@ -99,8 +99,7 @@ exports.startExam = async (req, res, next) => {
             examSession
         });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "خطایی رخ داده است." });
+        errorHandler(res, error, "examSessions", "startExam");
     }
 };
 
@@ -145,8 +144,7 @@ exports.getActiveExamSession = async (req, res, next) => {
         examSession.exam_id.duration = remainingTime;
         return res.status(200).json({ examSession });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "خطایی رخ داده است." });
+        errorHandler(res, error, "examSessions", "getActiveExamSession");
     }
 };
 
@@ -191,7 +189,7 @@ exports.updateQustionAnswer = async (req, res, next) => {
             });
         }
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "examSessions", "updateQustionAnswer");
     }
 };
 
@@ -222,7 +220,6 @@ exports.getExamSession = async (req, res, next) => {
 
         return res.status(200).json({ examSession });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "خطایی رخ داده است." });
+        errorHandler(res, error, "examSessions", "getExamSession");
     }
 };

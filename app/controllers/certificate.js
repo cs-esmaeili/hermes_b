@@ -3,6 +3,7 @@ const { userHavePermission } = require('../utils/user');
 const { createPureCertificate } = require('../utils/certificate');
 const FileManager = require('../class/filemanager');
 const fileManager = FileManager.getInstance();
+const errorHandler = require("../utils/errorHandler");
 
 exports.createCertificate = async (req, res, next) => {
     try {
@@ -41,9 +42,8 @@ exports.createCertificate = async (req, res, next) => {
         await createPureCertificate(certificateData, 0, req.body.duration);
 
         res.status(201).json({ message: "مدرک ایجاد شد" });
-    } catch (err) {
-        console.log(err);
-        res.status(400).json({ error: err.message });
+    } catch (error) {
+         errorHandler(res, error, "certificate", "createCertificate");
     }
 };
 
@@ -70,8 +70,8 @@ exports.getAllCertificates = async (req, res, next) => {
         const certificateCount = await Certificate.countDocuments(searchQuery);
 
         res.status(200).json({ certificateCount, certificates });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err.errors || err.message);
+    } catch (error) {
+        errorHandler(res, error, "certificate", "getAllCertificates");
     }
 };
 
@@ -84,8 +84,8 @@ exports.getCertificateById = async (req, res, next) => {
             return res.status(404).json({ error: 'Certificate مورد نظر یافت نشد' });
         }
         res.status(200).json(certificate);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        errorHandler(res, error, "certificate", "getCertificateById");
     }
 };
 
@@ -109,8 +109,8 @@ exports.updateCertificate = async (req, res, next) => {
             return res.status(404).json({ error: 'Certificate مورد نظر یافت نشد' });
         }
         res.status(200).json(updatedCertificate);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+    } catch (error) {
+        errorHandler(res, error, "certificate", "updateCertificate");
     }
 };
 
@@ -122,8 +122,8 @@ exports.deleteCertificate = async (req, res, next) => {
             return res.status(404).json({ error: 'Certificate مورد نظر یافت نشد' });
         }
         res.status(200).json({ message: 'Certificate با موفقیت حذف شد' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        errorHandler(res, error, "certificate", "deleteCertificate");
     }
 };
 

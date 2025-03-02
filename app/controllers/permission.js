@@ -1,6 +1,6 @@
 const Role = require('../database/models/Role');
 const { mTogglePermission } = require('../static/response.json');
-
+const errorHandler = require("../utils/errorHandler");
 
 exports.togglePermission = async (req, res, next) => {
     const { role_id, permission_id } = req.body;
@@ -23,7 +23,7 @@ exports.togglePermission = async (req, res, next) => {
             return;
         }
         throw { message: mTogglePermission.fail_1, statusCode: 401 };
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "permission", "togglePermission");
     }
 }

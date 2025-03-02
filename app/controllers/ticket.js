@@ -1,5 +1,6 @@
 const Ticket = require('../database/models/Ticket');
 const { userHavePermission } = require('../utils/user');
+const errorHandler = require("../utils/errorHandler");
 
 exports.createTicket = async (req, res, next) => {
     try {
@@ -25,7 +26,7 @@ exports.createTicket = async (req, res, next) => {
             ticket: newTicket,
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "ticket", "createTicket");
     }
 };
 
@@ -55,7 +56,7 @@ exports.getTicketById = async (req, res, next) => {
 
         return res.status(200).json(ticket);
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "ticket", "getTicketById");
     }
 };
 
@@ -91,9 +92,8 @@ exports.getTickets = async (req, res, next) => {
 
         const ticketsCount = await Ticket.countDocuments({});
         res.send({ ticketsCount, tickets });
-    } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err.errors || err.message);
+    } catch (error) {
+        errorHandler(res, error, "ticket", "getTickets");
     }
 };
 
@@ -125,6 +125,6 @@ exports.updateTicket = async (req, res, next) => {
             ticket,
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "ticket", "updateTicket");
     }
 };

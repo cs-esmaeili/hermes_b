@@ -1,32 +1,27 @@
-// certificateTemplateController.js
 const CertificateTemplate = require('../database/models/CertificateTemplate');
+const errorHandler = require("../utils/errorHandler");
 
-// Create a new certificate template
+
 async function createCertificateTemplate(req, res) {
     try {
-        // Destructure name from the request body
         const { name } = req.body;
-        // Create a new instance of CertificateTemplate
         const newTemplate = new CertificateTemplate({ name });
-        // Save the new certificate template to the database
         const savedTemplate = await newTemplate.save();
         res.status(201).json(savedTemplate);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        errorHandler(null, error, "certificateTemplate", "createCertificateTemplate");
     }
 }
 
-// Get all certificate templates
 async function getCertificateTemplates(req, res) {
     try {
         const templates = await CertificateTemplate.find();
         res.json(templates);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        errorHandler(null, error, "certificateTemplate", "getCertificateTemplates");
     }
 }
 
-// Get a certificate template by its ID
 async function getCertificateTemplateById(req, res) {
     try {
         const template = await CertificateTemplate.findById(req.params.id);
@@ -35,11 +30,10 @@ async function getCertificateTemplateById(req, res) {
         }
         res.json(template);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        errorHandler(null, error, "certificateTemplate", "getCertificateTemplateById");
     }
 }
 
-// Update a certificate template
 async function updateCertificateTemplate(req, res) {
     try {
         const updatedTemplate = await CertificateTemplate.findByIdAndUpdate(
@@ -52,11 +46,10 @@ async function updateCertificateTemplate(req, res) {
         }
         res.json(updatedTemplate);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        errorHandler(null, error, "certificateTemplate", "updateCertificateTemplate");
     }
 }
 
-// Delete a certificate template
 async function deleteCertificateTemplate(req, res) {
     try {
         const deletedTemplate = await CertificateTemplate.findByIdAndDelete(req.params.id);
@@ -65,7 +58,7 @@ async function deleteCertificateTemplate(req, res) {
         }
         res.json({ message: 'Template deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        errorHandler(null, error, "deleteCertificateTemplate", "updateCertificateTemplate");
     }
 }
 

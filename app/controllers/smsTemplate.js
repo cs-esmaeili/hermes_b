@@ -3,6 +3,7 @@ const SmsHistory = require("../database/models/SmsHistory")
 const { createSmsTemplate, deleteSmsTemplate, sendSmsToUser, cancelSendSmsToUser } = require('../static/response.json');
 const { sendFastSms, scheduleSms, cancelSms } = require('../utils/sms');
 const { convertPersianNumberToEnglish } = require('../utils/general');
+const errorHandler = require("../utils/errorHandler");
 
 exports.createSmsTemplate = async (req, res, next) => {
     try {
@@ -13,8 +14,8 @@ exports.createSmsTemplate = async (req, res, next) => {
             return;
         }
         throw { message: createSmsTemplate.fail, statusCode: 401 };
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "smsTemplate", "createSmsTemplate");
     }
 }
 exports.deleteSmsTemplate = async (req, res, next) => {
@@ -26,8 +27,8 @@ exports.deleteSmsTemplate = async (req, res, next) => {
             throw { message: deleteSmsTemplate.fail, statusCode: 401 };
         }
         res.send({ message: deleteSmsTemplate.ok });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "smsTemplate", "deleteSmsTemplate");
     }
 }
 exports.SmsTemplateList = async (req, res, next) => {
@@ -36,10 +37,8 @@ exports.SmsTemplateList = async (req, res, next) => {
         let templates = await SmsTemplate.find({}).skip((page - 1) * perPage).limit(perPage).lean();
         const templatesCount = await SmsTemplate.countDocuments({});
         res.send({ templatesCount, templates });
-    } catch (err) {
-        console.log(err);
-
-        res.status(err.statusCode || 500).json(err);
+    } catch (error) {
+        errorHandler(res, error, "smsTemplate", "SmsTemplateList");
     }
 }
 
@@ -59,9 +58,8 @@ exports.sendSmsToUser = async (req, res, next) => {
             throw { message: sendSmsToUser.fail, statusCode: 401 };
         }
         res.send({ message: sendSmsToUser.ok });
-    } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 500).json(err);
+    } catch (error) {
+        errorHandler(res, error, "smsTemplate", "sendSmsToUser");
     }
 }
 exports.cancelSendSmsToUser = async (req, res, next) => {
@@ -75,7 +73,6 @@ exports.cancelSendSmsToUser = async (req, res, next) => {
         }
         res.send({ message: cancelSendSmsToUser.ok });
     } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 500).json(err);
+        errorHandler(res, error, "smsTemplate", "cancelSendSmsToUser");
     }
 }

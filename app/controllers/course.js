@@ -1,9 +1,9 @@
 const Course = require("../database/models/Course");
-const Category = require("../database/models/Category");
 const FileManager = require('../class/filemanager');
 const fileManager = FileManager.getInstance();
 const { createApproval } = require('../controllers/approval');
 const Approval = require("../database/models/Approval");
+const errorHandler = require("../utils/errorHandler");
 
 exports.addCourse = async (req, res, next) => {
     try {
@@ -52,9 +52,8 @@ exports.addCourse = async (req, res, next) => {
         }
 
         res.json({ message: "Course Created", course_id: newCourse._id });
-    } catch (err) {
-        console.log(err);
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "course", "updateCertificateTemplate");
     }
 }
 
@@ -110,9 +109,8 @@ exports.editCourse = async (req, res, next) => {
 
 
         res.json({ message: "Course updated", course_id });
-    } catch (err) {
-        console.log("error in edit Course " + err);
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "course", "editCourse");
     }
 };
 
@@ -150,8 +148,8 @@ exports.courseList = async (req, res, next) => {
         const courseCount = await Course.countDocuments({ teacher_id: req.user._id });
 
         res.send({ courseCount, courses: finalCourses });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err.errors || err.message);
+    } catch (error) {
+        errorHandler(res, error, "course", "courseList");
     }
 };
 
@@ -186,8 +184,8 @@ exports.courseInformation = async (req, res, next) => {
         res.send({
             course: finalCourse
         });
-    } catch (err) {
-        console.log(err);
+    } catch (error) {
+        errorHandler(res, error, "course", "courseInformation");
     }
 }
 
@@ -231,8 +229,8 @@ exports.addTopic = async (req, res, next) => {
         }
 
         res.json({ message: "Topic Created", course_id });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "course", "addTopic");
     }
 }
 
@@ -256,9 +254,8 @@ exports.deleteTopic = async (req, res) => {
         }
 
         res.json({ message: "Course material deleted successfully", course });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "An error occurred", error: err.message });
+    } catch (error) {
+        errorHandler(res, error, "course", "deleteTopic");
     }
 };
 
@@ -295,8 +292,7 @@ exports.editTopic = async (req, res) => {
         }
 
         res.json({ message: "Course material updated successfully", course: approval.Course });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "An error occurred", error: err.message });
+    } catch (error) {
+        errorHandler(res, error, "course", "editTopic");
     }
 };

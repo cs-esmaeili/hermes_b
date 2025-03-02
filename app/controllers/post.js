@@ -1,6 +1,7 @@
 const Post = require('../database/models/Post');
 const { mCreatePost, mDeletePost, mUpdatePost } = require('../static/response.json');
 const { userHavePermission } = require('../utils/user');
+const errorHandler = require("../utils/errorHandler");
 
 exports.createPost = async (req, res, next) => {
     try {
@@ -22,14 +23,8 @@ exports.createPost = async (req, res, next) => {
             return;
         }
         throw { message: mCreatePost.fail_1, statusCode: 500 };
-    } catch (err) {
-        console.log(err);
-
-        if (err.code == 11000) {
-            res.status(err.statusCode || 422).json({ message: mCreatePost.fail_2 });
-        } else {
-            res.status(err.statusCode || 422).json(err);
-        }
+    } catch (error) {
+        errorHandler(res, error, "post", "createPost");
     }
 }
 exports.deletePost = async (req, res, next) => {
@@ -40,8 +35,8 @@ exports.deletePost = async (req, res, next) => {
             throw { message: mDeletePost.fail, statusCode: 500 };
         }
         res.send({ message: mDeletePost.ok });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "post", "deletePost");
     }
 }
 exports.updatePost = async (req, res, next) => {
@@ -62,10 +57,8 @@ exports.updatePost = async (req, res, next) => {
             return;
         }
         throw { message: mUpdatePost.fail, statusCode: 500 };
-    } catch (err) {
-        console.log(err);
-
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "post", "updatePost");
     }
 }
 
@@ -85,7 +78,7 @@ exports.postList = async (req, res, next) => {
         }
         const postsCount = await Post.countDocuments({}).lean();
         res.send({ postsCount, posts });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err.errors || err.message);
+    } catch (error) {
+        errorHandler(res, error, "post", "postList");
     }
 }

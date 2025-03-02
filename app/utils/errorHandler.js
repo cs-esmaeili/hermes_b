@@ -1,6 +1,6 @@
 const { logEvent } = require("./winston");
 
-module.exports = (res, error, category, method, extraData = null) => {
+module.exports = (res = null, error, category, method, extraData = null) => {
 
     const fullError = JSON.stringify(error, Object.getOwnPropertyNames(error));
 
@@ -23,8 +23,8 @@ module.exports = (res, error, category, method, extraData = null) => {
         }
         logEvent(log);
     }
-
-    return res.status(error.statusCode || 500).json({
-        message: error.message || "Internal server error"
-    });
+    if (res)
+        return res.status(error.statusCode || 500).json({
+            message: error.message || "Internal server error"
+        });
 };

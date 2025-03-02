@@ -1,8 +1,8 @@
 const FileManager = require('../class/filemanager');
 const { checkUserAccess, getUserFromToken } = require("../utils/user");
 const File = require("../database/models/File");
-
 const fileManager = FileManager.getInstance();
+const errorHandler = require("../utils/errorHandler");
 
 exports.uploadFile = async (req, res, next) => {
     try {
@@ -28,7 +28,7 @@ exports.uploadFile = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.log("Error in File upload : " + error);
+        errorHandler(res, error, "file", "uploadFile");
     }
 };
 
@@ -43,7 +43,7 @@ exports.deleteFile = async (req, res, next) => {
             message: 'File deleted successfully'
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "file", "deleteFile");
     }
 };
 
@@ -58,7 +58,7 @@ exports.deleteFolder = async (req, res, next) => {
             message: 'Folder deleted successfully'
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "file", "deleteFolder");
     }
 };
 
@@ -71,7 +71,7 @@ exports.listFiles = async (req, res, next) => {
 
         res.json({ files });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "file", "listFiles");
     }
 };
 
@@ -89,7 +89,7 @@ exports.createFolder = async (req, res, next) => {
             message: 'Folder created successfully'
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "file", "createFolder");
     }
 };
 
@@ -109,7 +109,7 @@ exports.renameFile = async (req, res, next) => {
             file
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "file", "renameFile");
     }
 };
 exports.renameFolder = async (req, res, next) => {
@@ -128,7 +128,7 @@ exports.renameFolder = async (req, res, next) => {
             file
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "file", "renameFolder");
     }
 };
 
@@ -147,7 +147,6 @@ exports.downloadFile = async (req, res, next) => {
             res.sendFile(file);
         }
     } catch (error) {
-        console.log(error);
-        res.status(error.statusCode || 500).json(error.message);
+        errorHandler(res, error, "file", "downloadFile");
     }
 }

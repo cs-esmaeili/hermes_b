@@ -8,6 +8,7 @@ const { createApproval } = require('../controllers/approval');
 const Approval = require('../database/models/Approval');
 const Role = require('../database/models/Role');
 const fileManager = FileManager.getInstance();
+const errorHandler = require("../utils/errorHandler");
 
 exports.securityCheck = async (req, res, next) => {
     try {
@@ -24,9 +25,8 @@ exports.securityCheck = async (req, res, next) => {
             information: user,
             permissions,
         });
-    } catch (err) {
-        console.log(err);
-        res.status(422).json({ message: mSearchUser.fail });
+    } catch (error) {
+        errorHandler(res, error, "user", "securityCheck");
     }
 }
 
@@ -51,8 +51,8 @@ exports.userInformation = async (req, res, next) => {
             permissions,
             information: finalUser
         });
-    } catch (err) {
-        console.log(err);
+    } catch (error) {
+        errorHandler(res, error, "user", "userInformation");
     }
 }
 
@@ -68,8 +68,8 @@ exports.userList = async (req, res, next) => {
 
         const usersCount = await User.countDocuments({});
         res.send({ usersCount, users });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err.errors || err.message);
+    } catch (error) {
+        errorHandler(res, error, "user", "userList");
     }
 }
 
@@ -119,7 +119,7 @@ exports.changeAvatar = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.log("Error in Change Avatar : " + error);
+        errorHandler(res, error, "user", "changeAvatar");
     }
 };
 
@@ -140,9 +140,9 @@ exports.updateUserData = async (req, res, next) => {
         }
 
         if (iWant) {
-            role_id = (await Role.findOne({ name : iWant }))?._id || role_id;
+            role_id = (await Role.findOne({ name: iWant }))?._id || role_id;
         }
-        
+
         const updateData = {
             'User.data.address': address,
             'User.data.fullName': fullName,
@@ -191,7 +191,7 @@ exports.updateUserData = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.log("Error in User data update : " + error);
+        errorHandler(res, error, "user", "updateUserData");
     }
 };
 
@@ -252,10 +252,7 @@ exports.createUser = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.log("Error in User creation : " + error);
-        res.status(error.statusCode || 500).json({
-            message: error.message || 'Internal Server Error'
-        });
+        errorHandler(res, error, "user", "createUser");
     }
 };
 

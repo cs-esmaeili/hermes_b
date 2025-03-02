@@ -1,4 +1,5 @@
 const Exam = require("../database/models/Exam");
+const errorHandler = require("../utils/errorHandler");
 
 exports.createExam = async (req, res, next) => {
     try {
@@ -19,7 +20,7 @@ exports.createExam = async (req, res, next) => {
             exam: newExam
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "exam", "createExam");
     }
 };
 
@@ -32,7 +33,7 @@ exports.getExams = async (req, res, next) => {
         res.send({ examCount, exams });
 
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "exam", "getExams");
     }
 };
 
@@ -50,7 +51,7 @@ exports.getExamById = async (req, res, next) => {
             exam
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "exam", "getExamById");
     }
 };
 
@@ -73,7 +74,7 @@ exports.updateExam = async (req, res, next) => {
             exam: updatedExam
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "exam", "updateExam");
     }
 };
 
@@ -90,6 +91,6 @@ exports.deleteExam = async (req, res, next) => {
             message: "Exam deleted successfully"
         });
     } catch (error) {
-        next(error);
+        errorHandler(res, error, "exam", "deleteExam");
     }
 };

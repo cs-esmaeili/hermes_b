@@ -3,14 +3,15 @@ const Permission = require('../database/models/Permission');
 const User = require('../database/models/User');
 const { transaction } = require('../database');
 const { mCreateRole, mUpdateRole, mDeleteRole } = require('../static/response.json');
+const errorHandler = require("../utils/errorHandler");
 
 exports.roleList = async (req, res, next) => {
     try {
         const permissions = await Permission.find({}).sort({ _id: -1 }).lean();
         const roles = await Role.find({}).populate('permissions').lean();
         res.send({ roles, permissions });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err.errors || err.message);
+    } catch (error) {
+        errorHandler(res, error, "role", "roleList");
     }
 }
 
@@ -27,8 +28,8 @@ exports.createRole = async (req, res, next) => {
             return;
         }
         throw { message: mCreateRole.fail, statusCode: 500 };
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "role", "createRole");
     }
 }
 
@@ -47,8 +48,8 @@ exports.deleteRole = async (req, res, next) => {
             return;
         }
         throw { message: mDeleteRole.fail_2, statusCode: 500 };
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "role", "deleteRole");
     }
 }
 exports.updateRole = async (req, res, next) => {
@@ -60,7 +61,7 @@ exports.updateRole = async (req, res, next) => {
             return;
         }
         throw { message: mUpdateRole.fail, statusCode: 500 };
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "role", "updateRole");
     }
 }

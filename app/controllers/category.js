@@ -1,6 +1,7 @@
 const Category = require('../database/models/Category');
 const Post = require('../database/models/Post');
 const { mCreateCategory, mDeleteCategory, mUpdateCategory } = require('../static/response.json');
+const errorHandler = require("../utils/errorHandler");
 
 exports.createCategory = async (req, res, next) => {
     try {
@@ -11,10 +12,8 @@ exports.createCategory = async (req, res, next) => {
             return;
         }
         throw { message: mCreateCategory.fail, statusCode: 401 };
-    } catch (err) {
-        console.log(err);
-
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "category", "createCategory");
     }
 }
 
@@ -24,8 +23,8 @@ exports.categoryList = async (req, res, next) => {
         let categorys = await Category.find({}).lean();
 
         res.send({ categorys });
-    } catch (err) {
-        res.status(err.statusCode || 500).json(err);
+    } catch (error) {
+        errorHandler(res, error, "category", "categoryList");
     }
 }
 
@@ -41,8 +40,8 @@ exports.deleteCategory = async (req, res, next) => {
             await Post.updateMany({ category_id }, { category_id: newCategory_id });
         }
         res.send({ message: mDeleteCategory.ok });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "category", "deleteCategory");
     }
 }
 
@@ -69,8 +68,8 @@ exports.updateCategory = async (req, res, next) => {
             return;
         }
         throw { message: mUpdateCategory.fail, statusCode: 500 };
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err);
+    } catch (error) {
+        errorHandler(res, error, "category", "updateCategory");
     }
 };
 
@@ -81,7 +80,7 @@ exports.getCategoryData = async (req, res, next) => {
         const posts = await Post.find({ category_id: category._id }).populate('category_id').skip((page - 1) * perPage).limit(perPage).lean();
         const postsCount = await Post.countDocuments({ category_id: category._id }).lean();
         res.send({ category, postsCount, posts });
-    } catch (err) {
-        res.status(err.statusCode || 422).json(err.errors || err.message);
+    } catch (error) {
+        errorHandler(res, error, "category", "getCategoryData");
     }
 }
