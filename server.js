@@ -27,6 +27,7 @@ const { initSocketService } = require('./app/services/socketHandlers');
 const { LogService } = require('./app/services/logger');
 const { reloadJobs } = require('./app/utils/sms');
 const { checkRoutePermission } = require("./app/middlewares/checkAuth");
+const { logMiddleware } = require("./app/middlewares/logMiddleware");
 const fileManager = require('./app/class/filemanager');
 const { setApp } = require('./app/AppInstance');
 
@@ -83,6 +84,7 @@ const upload = multer({ storage: storage });
   app.use("/auth", auth);
   app.get('/file/:file_id/:token', downloadFile);
   app.use(checkRoutePermission);
+  app.use(logMiddleware);
   app.use("/file", file);
   app.use("/user", user);
   app.use("/role", role);

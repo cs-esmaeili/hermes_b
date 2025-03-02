@@ -227,8 +227,7 @@ exports.googleLogInCheckNeedRegister = async (req, res, next) => {
         const { _id, token } = await createToken(user.userName, user.token_id);
         const userUpdate = await User.updateOne({ _id: user._id }, { token_id: _id });
 
-        if (user?.role_id != "User")
-            logEvent({ method: "googleLogInCheckNeedRegister", level: "http", category: "auth", extraData: { userName } })
+        logEvent({ method: "googleLogInCheckNeedRegister", level: "http", category: "auth", extraData: { userName: user.userName } })
 
         res.json({
             userName: user.userName,

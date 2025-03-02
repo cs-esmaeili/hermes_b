@@ -41,22 +41,29 @@ const getDbLogger = () => {
 
 
 const logEvent = ({ onFile = false, onConsole = false, onDatabase = true, method, level, category, message = null, extraData = {} }) => {
-    const logData = {
-        method,
-        category,
-        message: (!message) ? method : message,
-        time: currentTime(),
-        ...extraData
-    };
+    try {
 
-    if (onFile) {
-        fileLogger.log(level, logData);
-    }
-    if (onDatabase) {
-        getDbLogger().log(level, logData);
-    }
-    if (onConsole) {
-        console.log(message);
+        const logData = {
+            method,
+            category,
+            message: (!message) ? method : message,
+            time: currentTime(),
+            ...extraData
+        };
+
+        if (onFile) {
+            fileLogger.log(level, logData);
+        }
+        if (onDatabase) {
+            getDbLogger().log(level, logData);
+        }
+        if (onConsole) {
+            console.log(message);
+        }
+
+    } catch (error) {
+        console.log(error);
+
     }
 };
 
