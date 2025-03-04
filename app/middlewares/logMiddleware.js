@@ -2,26 +2,22 @@ const { logEvent } = require("../utils/winston");
 const passLogs = require('./../static/passLog.json');
 
 exports.logMiddleware = (req, res, next) => {
+
     const currentRoute = req.path;
 
-    // تابع تبدیل الگو به regex که از هر دو نوع پارامتر ":id" و wildcard "*" پشتیبانی می‌کند
     function convertToRegex(dbRoute) {
         const pattern = dbRoute
-            .replace(/\*/g, '.*')            // تبدیل '*' به '.*' برای پشتیبانی از wildcard
-            .replace(/:[^\s/]+/g, '[^/]+');   // تبدیل پارامترهای ":id" به الگوی regex
+            .replace(/\*/g, '.*')
+            .replace(/:[^\s/]+/g, '[^/]+');
         return new RegExp(`^${pattern}$`);
     }
 
-    console.log("Current Route:", currentRoute);
-
-    const isAllowed = passLogs.some((log) => {
+    const needPass = passLogs.some((log) => {
         const regex = convertToRegex(log);
         return regex.test(currentRoute);
     });
 
-    console.log("isAllowed:", isAllowed);
-
-    if (isAllowed) {
+    if (needPass) {
         next();
         return;
     }
